@@ -46,7 +46,7 @@ def main() -> int:
         if r.returncode != 0:
             print(r.stderr)
             return 1
-        mapping = json.loads(out.read_text(encoding="utf-8"))["9728"]
+        mapping = json.loads(out.read_text(encoding="utf-8"))[str(0x2400)]
         expect = {"knob03": "Filter A", "knob05": "EQ High A", "knob31": "Crossfader"}
         ok = True
         for slot, name in expect.items():
