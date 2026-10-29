@@ -26,8 +26,8 @@ that keeps latency at ~50 ms instead of 200–1000 ms.
 
 | Phase | Goal | Status |
 |---|---|---|
-| **0** | Prove the visual idea: preset coordinates + fake events + glowing overlay in OBS | ✅ scaffolded |
-| **1** | Real MIDI + TSI parser + manual calibration tool | ⬜ |
+| **0** | Prove the visual idea: preset coordinates + fake events + glowing overlay in OBS | ✅ done — glow + HUD card verified by screenshots |
+| **1** | Real MIDI + TSI parser + manual calibration tool | ✅ scaffolded — see `docs/PHASE1.md`; **user actions:** run `midi_tap watch`, fill `cc_map.json`, `calibrate` |
 | **2** | Robustness: OpenCV template matching, X1 page states, per-deck colors, decay polish | ⬜ |
 | **3** | Vision auto-calibration (Grounding DINO / Qwen2-VL) on startup & page change | ⬜ |
 
@@ -73,14 +73,28 @@ The overlay background is transparent and click-through in OBS; glows composite 
 MidiMAT/
 ├── README.md               ← this file
 ├── docs/ARCHITECTURE.md    ← full design: components, data flow, latency, open questions
-├── layout.json             ← widget boxes, colors, glow tuning (the "calibration profile")
-├── requirements.txt        ← sidecar deps (websockets now; MIDI/CV deps land in phase 1)
-├── sidecar/server.py       ← HTTP static + WebSocket broadcaster + demo event generator
+├── docs/TRAKTOR_UI.md      ← Traktor GUI zone map + HUD placement decision
+├── docs/PHASE1.md          ← Phase 1 findings & bring-up checklist
+├── layout.json             ← widget boxes, colors, glow/HUD tuning (calibration profile)
+├── cc_map.json             ← learned MIDI key → label/deck/widget table (X1 source of truth)
+├── midimat.config.json     ← paths: MIDI port hint, cc_map, optional TSI
+├── requirements.txt
+├── sidecar/
+│   ├── server.py           ← HTTP static + WebSocket broadcaster + demo/MIDI generator
+│   ├── midi_tap.py         ← MIDI list/watch/record + background listener
+│   ├── tsi_parser.py       ← TSI → (channel,kind,number) → Traktor function names
+│   ├── mapping.py          ← Resolver: cc_map (pages) > TSI fallback → overlay event
+│   └── calibrate.py        ← hover-and-capture widget boxes + OBS crop origin
 ├── overlay/
 │   ├── index.html          ← OBS browser source page (transparent canvas)
-│   ├── overlay.js          ← WS client, glow renderer, built-in demo mode
+│   ├── overlay.js          ← WS client, glow renderer, HUD card, demo/shot modes
+│   ├── hud-alpha.js        ← unit-tested fade timeline (no blinking)
 │   └── style.css
-└── scripts/run.ps1         ← venv bootstrap + launch
+└── scripts/
+    ├── run.ps1             ← venv bootstrap + launch
+    ├── test_hud_alpha.js   ← node test: HUD fade timeline
+    ├── test_phase1.py      ← python test: TSI parser + resolver (real TSI files)
+    └── explore_tsi.py      ← TSI structure dumper (research tool)
 ```
 
 ## Hardware note (verify in Phase 1)

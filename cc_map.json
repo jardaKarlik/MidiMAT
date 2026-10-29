@@ -1,0 +1,6 @@
+{
+  "port_hint": "X1 MK3",
+  "page_buttons": [],
+  "entries": [],
+  "_howto": "1) python -m sidecar.midi_tap list  2) python -m sidecar.midi_tap watch --port 'X1 MK3'  3) move a control, note the printed ch/kind/#  4) add an entry: {\"channel\": 0, \"kind\": \"cc\", \"number\": 21, \"label\": \"FX1 · Dry/Wet\", \"deck\": \"FX\", \"widget\": \"fx1_drywet\"}. widget must match an id in layout.json (otherwise HUD-only). Optional \"page\": \"fx\" scopes the entry; register page switches in page_buttons."
+}

@@ -57,28 +57,31 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function poke(id, value, label) {
-  const s = state.get(id);
-  if (!s) return;
+function poke(id, value, label, deck) {
   const now = performance.now();
-  // liveness ALWAYS refreshes — slow knob turns (±1 steps) must not blink the
-  // card/glow out mid-interaction; value gets hysteresis, activity never does.
-  s.last = now;
-  if (Math.abs(value - s.value) >= 2 || value === 0 || value === 127) {
-    s.value = value;
-  }
+  const s = state.get(id);
   const w = widgetById.get(id);
-  if (!w) return;
+  // HUD-only events are legal: label without calibrated widget => description
+  // card shows, no glow box (until calibrate.py assigns a box to this id).
+  if (!s && !w && !label) return;
+  if (s) {
+    // liveness ALWAYS refreshes — slow knob turns (±1 steps) must not blink the
+    // card/glow out mid-interaction; value gets hysteresis, activity never does.
+    s.last = now;
+    if (Math.abs(value - s.value) >= 2 || value === 0 || value === 127) {
+      s.value = value;
+    }
+  }
   const ttl = (layout && layout.hud && layout.hud.ttl_ms) || 1600;
   // fade-in only on TRUE appearance: keep first-seen time while the interaction
-  // continues (same widget, events within ttl). Keying it off `last` caused the
+  // continues (same id, events within ttl). Keying it off `last` caused the
   // bottom-center card to re-fade on every value tick = blinking.
   const continuing = hud && hud.id === id && now - hud.last <= ttl;
   hud = {
     id,
-    label: label || w.label,
-    deck: w.deck,
-    value: s.value,
+    label: label || (w && w.label) || id,
+    deck: (w && w.deck) || deck || "MIDI",
+    value: s ? s.value : value,
     last: now,
     first: continuing ? hud.first : now,
   };
@@ -118,7 +121,7 @@ function connectWS() {
       return;
     }
     if (msg.type === "hello" && msg.layout) applyLayout(msg.layout);
-    if (msg.type === "midi") poke(msg.id, msg.value, msg.label);
+    if (msg.type === "midi") poke(msg.id, msg.value, msg.label, msg.deck);
   };
 }
 

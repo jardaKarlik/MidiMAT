@@ -100,13 +100,18 @@ trivial. `obs-websocket` remains a candidate for *scene switching* on X1 page ch
 
 ## Open questions / risks
 
-1. **Does the X1 mk3 expose class-compliant MIDI to the OS**, or HID-only to Traktor?
-   (Test with `mido.get_input_names()` in Phase 1 — the one hardware unknown.)
-2. **TSI XML schema details** — confirm exact element names across Traktor Pro 3/4 exports.
+1. ~~Does the X1 mk3 expose class-compliant MIDI to the OS?~~ **RESOLVED 2026-10-29:**
+   yes — ports `TRAKTOR X1 MK3` / `2 - TRAKTOR X1 MK3` visible to `mido`. Remaining
+   sub-question: does it stream knob/button MIDI *while Traktor has it open as a native
+   HID device*? (Test: `python -m sidecar.midi_tap watch --port "X1 MK3"`.)
+2. ~~TSI XML schema details~~ **RESOLVED:** format is base64 TLV (DCBM key strings +
+   CMAI cmd_ids + 377 named commands); parser implemented & tested against factory
+   files (99.2% name coverage). X1 MK3 itself carries **zero** DDCB mappings (native
+   HID) → empirical `cc_map.json` is its source of truth (see `docs/PHASE1.md`).
 3. **Thin bright strokes vs. stream bitrate** — if outlines shimmer at low bitrate, go
    thicker + softer bloom (validate in Phase 0 at real stream settings).
 4. **Coordinate drift** — OBS crop must equal the sidecar's grab region; corner-recalibration
-   tool planned for Phase 1.
+   tool built (`sidecar/calibrate.py`), pending first real use.
 
 ## Stack
 

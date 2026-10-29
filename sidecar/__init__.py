@@ -1,0 +1,1 @@
+"""MidiMAT sidecar package (Phase 1: MIDI tap, TSI parser, resolver, calibrate)."""

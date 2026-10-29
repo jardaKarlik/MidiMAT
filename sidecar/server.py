@@ -26,6 +26,14 @@ import websockets
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 LAYOUT = json.loads((ROOT / "layout.json").read_text(encoding="utf-8"))
 
+import sys  # noqa: E402
+
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from sidecar.midi_tap import MidiTap  # noqa: E402
+from sidecar.mapping import load_resolver  # noqa: E402
+
 log = logging.getLogger("midimat")
 
 # --- shared state between the HTTP thread and the asyncio loop -----------------
@@ -42,8 +50,14 @@ def emit(event: dict) -> None:
     asyncio.run_coroutine_threadsafe(_queue.put(event), _loop)
 
 
-def emit_midi(widget_id: str, value: int) -> None:
-    emit({"type": "midi", "id": widget_id, "value": int(value), "ts": time.time()})
+def emit_midi(widget_id: str, value: int, label: str | None = None,
+               deck: str | None = None) -> None:
+    ev = {"type": "midi", "id": widget_id, "value": int(value), "ts": time.time()}
+    if label:
+        ev["label"] = label
+    if deck:
+        ev["deck"] = deck
+    emit(ev)
 
 
 # --- HTTP: static files from repo root (overlay + layout.json) -----------------
@@ -136,6 +150,10 @@ def main() -> None:
     parser.add_argument("--ws-port", type=int, default=8787)
     parser.add_argument("--no-demo", action="store_true",
                         help="disable the fake event generator (phase 1: real MIDI)")
+    parser.add_argument("--midi", nargs="?", const="", default=None, metavar="SUBSTR",
+                        help="listen to a MIDI port (substring match; omit value to use "
+                             "port_hint from midimat.config.json)")
+    parser.add_argument("--config", default=str(ROOT / "midimat.config.json"))
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -147,10 +165,40 @@ def main() -> None:
     start_http(args.http_port)
     log.info("overlay:  http://127.0.0.1:%d/overlay/index.html?debug=1", args.http_port)
     log.info("widgets:  %d loaded from %s", len(LAYOUT["widgets"]), ROOT / "layout.json")
+
+    tap = None
+    if args.midi is not None:
+        resolver = load_resolver(args.config)
+        port_substr = args.midi or resolver.port_hint or "X1"
+
+        def on_midi(msg: dict) -> None:
+            res = resolver.resolve(msg)
+            if not res:
+                log.debug("unmapped: ch=%d %s #%d val=%d",
+                          msg["channel"] + 1, msg["kind"], msg["number"], msg["value"])
+                return
+            wid = res.get("widget") or (
+                f"key:{msg['channel']}.{msg['kind']}.{msg['number']}"
+            )
+            emit_midi(wid, msg["value"], res.get("label"), res.get("deck"))
+
+        tap = MidiTap(port_substr, on_midi,
+                      on_status=lambda s: log.info("midi| %s", s))
+        tap.start()
+        log.info("MIDI on port~%r  resolver: %d cc_map entries, %d tsi mappings",
+                 port_substr, len(resolver.entries), len(resolver.tsi_table))
+        if not resolver.entries and not resolver.tsi_table:
+            log.warning("empty resolver — nothing will glow; run "
+                        "`python -m sidecar.midi_tap watch --port %r` and fill cc_map.json",
+                        port_substr)
+
     try:
         asyncio.run(run_ws(args.ws_port, demo=not args.no_demo))
     except KeyboardInterrupt:
         log.info("shutting down")
+    finally:
+        if tap:
+            tap.stop()
 
 
 if __name__ == "__main__":
