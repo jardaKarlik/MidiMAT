@@ -1,8 +1,8 @@
 {
   "name": "default",
   "canvas": {
-    "width": 1936,
-    "height": 1047
+    "width": 1920,
+    "height": 1080
   },
   "origin": {
     "x": 12,
@@ -29,12 +29,12 @@
     "enabled": true,
     "ttl_ms": 1600,
     "anchor": "bottom-center",
-    "margin_bottom": 48,
+    "margin_bottom": 14,
     "width": 640,
-    "height": 88,
+    "height": 76,
     "show_value_pct": true
   },
-  "_positions": "Snapped by vision_snap 2026-10-29 from occlusion-proof PrintWindow capture (1936x1047). Grid read from annotated preview: EQ cols x=923/982 (rows y=235/294/355), FLTR outer strips x=861/1052 y=267, faders x=893/1019 y=352-490, crossfader y=685.",
+  "_positions": "Vision-snapped 2026-10-29 from CLIENT-area PrintWindow capture (Traktor content 1920x988 at scene 0,0). Info band y>=989 reserved for HUD. Z1: EQ cols x=915/980 rows y=158/216/278, FLTR x=860/1052 y=240, faders x=887/1020 y=300-450, xfade y=586.",
   "widgets": [
     {
       "id": "fx1_size",
@@ -42,10 +42,10 @@
       "deck": "FX",
       "shape": "circle",
       "box": {
-        "x": 583,
-        "y": 35,
-        "w": 52,
-        "h": 52
+        "x": 40,
+        "y": 1120,
+        "w": 40,
+        "h": 40
       }
     },
     {
@@ -54,10 +54,10 @@
       "deck": "FX",
       "shape": "circle",
       "box": {
-        "x": 549,
-        "y": 39,
-        "w": 52,
-        "h": 52
+        "x": 40,
+        "y": 1120,
+        "w": 40,
+        "h": 40
       }
     },
     {
@@ -66,10 +66,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 982,
-        "y": 121,
-        "w": 84,
-        "h": 84
+        "x": 40,
+        "y": 1120,
+        "w": 40,
+        "h": 40
       }
     },
     {
@@ -78,10 +78,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 946,
-        "y": 260,
-        "w": 84,
-        "h": 84
+        "x": 40,
+        "y": 1120,
+        "w": 40,
+        "h": 40
       }
     },
     {
@@ -90,10 +90,10 @@
       "deck": "AB",
       "shape": "rect",
       "box": {
-        "x": 1109,
-        "y": 10,
-        "w": 60,
-        "h": 140
+        "x": 40,
+        "y": 1120,
+        "w": 40,
+        "h": 40
       }
     },
     {
@@ -102,8 +102,8 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 838,
-        "y": 244,
+        "x": 837,
+        "y": 217,
         "w": 46,
         "h": 46
       }
@@ -114,8 +114,8 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 900,
-        "y": 212,
+        "x": 892,
+        "y": 135,
         "w": 46,
         "h": 46
       }
@@ -126,8 +126,8 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 900,
-        "y": 271,
+        "x": 892,
+        "y": 193,
         "w": 46,
         "h": 46
       }
@@ -138,8 +138,8 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 900,
-        "y": 332,
+        "x": 892,
+        "y": 255,
         "w": 46,
         "h": 46
       }
@@ -150,10 +150,10 @@
       "deck": "A",
       "shape": "rect",
       "box": {
-        "x": 881,
-        "y": 352,
+        "x": 875,
+        "y": 300,
         "w": 24,
-        "h": 140
+        "h": 150
       }
     },
     {
@@ -163,7 +163,7 @@
       "shape": "circle",
       "box": {
         "x": 1029,
-        "y": 244,
+        "y": 217,
         "w": 46,
         "h": 46
       }
@@ -174,8 +174,8 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 959,
-        "y": 212,
+        "x": 957,
+        "y": 135,
         "w": 46,
         "h": 46
       }
@@ -186,8 +186,8 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 959,
-        "y": 271,
+        "x": 957,
+        "y": 193,
         "w": 46,
         "h": 46
       }
@@ -198,8 +198,8 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 959,
-        "y": 332,
+        "x": 957,
+        "y": 255,
         "w": 46,
         "h": 46
       }
@@ -210,10 +210,10 @@
       "deck": "B",
       "shape": "rect",
       "box": {
-        "x": 1007,
-        "y": 352,
+        "x": 1008,
+        "y": 300,
         "w": 24,
-        "h": 140
+        "h": 150
       }
     },
     {
@@ -222,9 +222,9 @@
       "deck": "AB",
       "shape": "rect",
       "box": {
-        "x": 860,
-        "y": 672,
-        "w": 200,
+        "x": 847,
+        "y": 573,
+        "w": 220,
         "h": 26
       }
     }

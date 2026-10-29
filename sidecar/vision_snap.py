@@ -30,6 +30,8 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def traktor_window_rect(title_substr: str = "Traktor") -> dict | None:
+    """Largest visible window matching title -> CLIENT-area rect (content only,
+    no invisible resize borders / title bar) + hwnd."""
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
     user32 = ctypes.windll.user32
     titles: list[tuple] = []
@@ -52,10 +54,19 @@ def traktor_window_rect(title_substr: str = "Traktor") -> dict | None:
     user32.EnumWindows(EnumProc(cb), 0)
     if not titles:
         return None
-    # largest match wins — "Traktor" also appears on popups/children
     name, l, t, r, b, hwnd = max(
         titles, key=lambda x: (x[3] - x[1]) * (x[4] - x[2]))
-    return {"title": name, "x": l, "y": t, "w": r - l, "h": b - t,
+
+    # CLIENT area (what Traktor actually draws) via GetClientRect + ClientToScreen
+    crc = wt.RECT()
+    user32.GetClientRect(hwnd, ctypes.byref(crc))
+    pt = wt.POINT(0, 0)
+    user32.ClientToScreen(hwnd, ctypes.byref(pt))
+    return {"title": name,
+            "x": int(pt.x), "y": int(pt.y),            # CLIENT on screen
+            "w": int(crc.right), "h": int(crc.bottom),
+            "wx": int(l), "wy": int(t),                # WINDOW outer (PrintWindow paints all)
+            "ww": int(r - l), "wh": int(b - t),
             "hwnd": int(hwnd)}
 
 
@@ -66,7 +77,11 @@ def grab(rect: dict) -> np.ndarray:
 
     user32, gdi32 = ctypes.windll.user32, ctypes.windll.gdi32
     hwnd = rect["hwnd"]
-    w, h = rect["w"], rect["h"]
+    # PrintWindow paints the WHOLE window (incl. title/menu) — size the bitmap to
+    # the outer rect, then crop to the client area so coords are content-space.
+    ox, oy = rect["x"] - rect.get("wx", rect["x"]), rect["y"] - rect.get("wy", rect["y"])
+    w, h = rect["ww"], rect["wh"]
+    cw, ch = rect["w"], rect["h"]
     img = None
     try:
         hwnd_dc = user32.GetWindowDC(hwnd)
@@ -93,7 +108,8 @@ def grab(rect: dict) -> np.ndarray:
             gdi32.GetDIBits(mem_dc, bmp, 0, h, buf, ctypes.byref(bmi), 0)
             arr = np.frombuffer(buf.raw, np.uint8).reshape(h, w, 4)[:, :, :3]
             cand = arr[:, :, ::-1].copy()  # BGRA -> BGR
-            if cand.std() > 5.0:  # not blank
+            cand = cand[oy:oy + ch, ox:ox + cw]  # crop to client content
+            if cand.size and cand.std() > 5.0:
                 img = cand
         gdi32.DeleteObject(bmp)
         gdi32.DeleteDC(mem_dc)
@@ -162,7 +178,29 @@ def main(argv: list[str] | None = None) -> int:
                     help="snap circular widgets in layout.json to detections")
     ap.add_argument("--max-snap-dist", type=int, default=90,
                     help="max distance (px) widget->detection to accept a snap")
+    ap.add_argument("--import", dest="import_json", metavar="FILE",
+                    help="apply VLM boxes JSON (see docs/PROMPT_VLM.md) instead "
+                         "of detecting")
     args = ap.parse_args(argv)
+
+    if args.import_json:
+        data = json.loads(Path(args.import_json).read_text(encoding="utf-8"))
+        layout_path = ROOT / "layout.json"
+        layout = json.loads(layout_path.read_text(encoding="utf-8"))
+        if "canvas" in data:
+            layout["canvas"] = data["canvas"]
+        applied = 0
+        by_id = {w["id"]: w for w in layout["widgets"]}
+        for wid, box in data.get("boxes", {}).items():
+            if wid in by_id:
+                by_id[wid]["box"] = {k: int(v) for k, v in box.items()}
+                applied += 1
+                print(f"  IMPORT {wid}: {box}")
+            else:
+                print(f"  skip unknown id {wid}")
+        layout_path.write_text(json.dumps(layout, indent=2) + "\n", encoding="utf-8")
+        print(f"imported {applied} boxes; refresh the browser source")
+        return 0
 
     rect = traktor_window_rect(args.title)
     if not rect:
