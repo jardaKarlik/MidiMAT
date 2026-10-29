@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local-only notes
+*.local.md
+
+# Sidecar runtime artifacts
+server.log
+server.err
+server.pid

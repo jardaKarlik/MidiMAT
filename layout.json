@@ -1,0 +1,48 @@
+{
+  "name": "default",
+  "canvas": { "width": 1920, "height": 1080 },
+  "theme": {
+    "deck_colors": { "A": "#33ccff", "B": "#3dff9e", "FX": "#ffcc33" },
+    "label_bg": "rgba(0, 0, 0, 0.6)",
+    "label_color": "#ffffff"
+  },
+  "glow": {
+    "ttl_ms": 600,
+    "stroke_width": 3,
+    "blur_base": 12,
+    "blur_gain": 26,
+    "corner_radius": 14
+  },
+  "widgets": [
+    {
+      "id": "deck_a_filter",
+      "label": "Deck A · Filter",
+      "deck": "A",
+      "box": { "x": 300, "y": 430, "w": 110, "h": 110 }
+    },
+    {
+      "id": "deck_a_move",
+      "label": "Deck A · Move",
+      "deck": "A",
+      "box": { "x": 470, "y": 430, "w": 110, "h": 110 }
+    },
+    {
+      "id": "fx1_size",
+      "label": "FX1 · Flanger Size",
+      "deck": "FX",
+      "box": { "x": 900, "y": 300, "w": 96, "h": 96 }
+    },
+    {
+      "id": "fx1_drywet",
+      "label": "FX1 · Dry/Wet",
+      "deck": "FX",
+      "box": { "x": 1050, "y": 300, "w": 96, "h": 96 }
+    },
+    {
+      "id": "master_gain",
+      "label": "Master · Gain",
+      "deck": "B",
+      "box": { "x": 1560, "y": 700, "w": 80, "h": 160 }
+    }
+  ]
+}
