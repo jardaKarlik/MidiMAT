@@ -37,7 +37,11 @@ VENDOR_USAGE_MIN = 0xFF00  # vendor-defined usage pages live here (0xFF00-0xFFFF
 
 def _require_hid() -> None:
     if hid is None:
-        raise SystemExit("hidapi not installed — pip install hidapi")
+        raise SystemExit(
+            "hidapi not installed in THIS python.\n"
+            "  Use the project venv:  .\\.venv\\Scripts\\python.exe -m sidecar.nhl_tap ...\n"
+            "  (or the wrapper:      .\\scripts\\nhl.ps1 probe)"
+        )
 
 
 def ni_devices() -> list[dict]:
