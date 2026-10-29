@@ -20,4 +20,5 @@ server.pid
 set_capture.log
 set_capture.err
 set_capture.pid
-nhl_*.jsonl
+nhl_*.jsonlrun_test.log
+run_test.err
