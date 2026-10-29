@@ -1,8 +1,8 @@
 {
   "name": "default",
   "canvas": {
-    "width": 1920,
-    "height": 1080
+    "width": 1936,
+    "height": 1047
   },
   "origin": {
     "x": 12,
@@ -34,7 +34,7 @@
     "height": 88,
     "show_value_pct": true
   },
-  "_positions": "Z1 boxes refit 2026-10-29 from user's 4-deck Extended screenshot (top-center channel strips A/B). PLACEHOLDERS \u2014 run calibrate for pixel-exact.",
+  "_positions": "Snapped by vision_snap 2026-10-29 from occlusion-proof PrintWindow capture (1936x1047). Grid read from annotated preview: EQ cols x=923/982 (rows y=235/294/355), FLTR outer strips x=861/1052 y=267, faders x=893/1019 y=352-490, crossfader y=685.",
   "widgets": [
     {
       "id": "fx1_size",
@@ -102,10 +102,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 1017,
-        "y": 156,
-        "w": 44,
-        "h": 44
+        "x": 838,
+        "y": 244,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -114,10 +114,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 1040,
-        "y": 104,
-        "w": 44,
-        "h": 44
+        "x": 900,
+        "y": 212,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -126,10 +126,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 1042,
-        "y": 142,
-        "w": 44,
-        "h": 44
+        "x": 900,
+        "y": 271,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -138,10 +138,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 1043,
-        "y": 179,
-        "w": 44,
-        "h": 44
+        "x": 900,
+        "y": 332,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -150,10 +150,10 @@
       "deck": "A",
       "shape": "rect",
       "box": {
-        "x": 1050,
-        "y": 212,
+        "x": 881,
+        "y": 352,
         "w": 24,
-        "h": 100
+        "h": 140
       }
     },
     {
@@ -162,10 +162,10 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 1130,
-        "y": 159,
-        "w": 44,
-        "h": 44
+        "x": 1029,
+        "y": 244,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -174,10 +174,10 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 1075,
-        "y": 106,
-        "w": 44,
-        "h": 44
+        "x": 959,
+        "y": 212,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -186,10 +186,10 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 1076,
-        "y": 140,
-        "w": 44,
-        "h": 44
+        "x": 959,
+        "y": 271,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -198,10 +198,10 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 1075,
-        "y": 182,
-        "w": 44,
-        "h": 44
+        "x": 959,
+        "y": 332,
+        "w": 46,
+        "h": 46
       }
     },
     {
@@ -210,10 +210,10 @@
       "deck": "B",
       "shape": "rect",
       "box": {
-        "x": 1088,
-        "y": 221,
+        "x": 1007,
+        "y": 352,
         "w": 24,
-        "h": 100
+        "h": 140
       }
     },
     {
@@ -222,10 +222,10 @@
       "deck": "AB",
       "shape": "rect",
       "box": {
-        "x": 971,
-        "y": 444,
-        "w": 214,
-        "h": 32
+        "x": 860,
+        "y": 672,
+        "w": 200,
+        "h": 26
       }
     }
   ]
