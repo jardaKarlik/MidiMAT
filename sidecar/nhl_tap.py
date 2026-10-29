@@ -325,6 +325,138 @@ class NhlTap(threading.Thread):
         self.handles.clear()
 
 
+# --- Guided learn: name the byte-offset slots --------------------------------
+
+PLANS = {
+    "z1": {
+        "pid": 0x2400,
+        "controls": [  # (prompt name, widget id in layout.json or None)
+            ("Filter A", "z1_fltr_a"), ("EQ High A", "z1_eq_hi_a"),
+            ("EQ Mid A", "z1_eq_mid_a"), ("EQ Low A", "z1_eq_lo_a"),
+            ("Channel Fader A", "z1_fader_a"),
+            ("Filter B", "z1_fltr_b"), ("EQ High B", "z1_eq_hi_b"),
+            ("EQ Mid B", "z1_eq_mid_b"), ("EQ Low B", "z1_eq_lo_b"),
+            ("Channel Fader B", "z1_fader_b"),
+            ("Crossfader", "z1_xfade"),
+        ],
+    },
+    "x1": {
+        "pid": 0x2200,
+        "controls": [(f"X1 Knob {i + 1}", None) for i in range(9)],
+    },
+}
+
+
+def cmd_learn(args: argparse.Namespace) -> int:
+    """Non-interactive guided capture: print prompts, record timed windows."""
+    plan = PLANS[args.plan]
+    devs = [d for d in ni_devices()
+            if is_vendor(d) and d["product_id"] == plan["pid"]]
+    if args.serial:
+        devs = [d for d in devs if d["serial_number"] == args.serial]
+    if not devs:
+        raise SystemExit(f"no device for plan {args.plan!r}")
+    handles = []
+    for d in devs:
+        dev = hid.device()
+        dev.open_path(d["path"])
+        dev.set_nonblocking(True)
+        handles.append((d, dev))
+
+    out = open(args.out, "a", encoding="utf-8")
+    per = args.seconds_per
+    print(f"\nLEARN SESSION — plan {args.plan}, {len(plan['controls'])} controls "
+          f"x {per:.0f}s. Sweep each control FULLY when prompted!\n", flush=True)
+    for i, (name, _) in enumerate(plan["controls"], 1):
+        print(f"  {i:2d}. {name}", flush=True)
+    time.sleep(3)
+    total = 0
+    for name, widget in plan["controls"]:
+        t0 = time.time()
+        print(f"\n>>>  SWEEP NOW: {name}  ({per:.0f}s)", flush=True)
+        out.write(json.dumps({"type": "marker", "control": name, "widget": widget,
+                              "t_start": t0, "t_end": t0 + per}) + "\n")
+        deadline = t0 + per
+        while time.time() < deadline:
+            for d, dev in handles:
+                rep = dev.read(256)
+                if rep:
+                    total += 1
+                    out.write(json.dumps({
+                        "t": round(time.time(), 4), "serial": d["serial_number"],
+                        "pid": d["product_id"], "len": len(rep),
+                        "hex": bytes(rep).hex()}) + "\n")
+            time.sleep(0.002)
+    out.close()
+    for _, dev in handles:
+        dev.close()
+    print(f"\ndone — {total} reports captured. Run: "
+          f"python -m sidecar.nhl_tap learnmap --plan {args.plan}", flush=True)
+    return 0
+
+
+def cmd_learnmap(args: argparse.Namespace) -> int:
+    """Analyze a learn capture -> nhl_map.json (slot -> {name, widget})."""
+    plan = PLANS[args.plan]
+    pid = plan["pid"]
+    windows = []  # (control, widget, t_start, t_end, {slot: [raw12...]})
+    per_slot_vals: list[dict[str, list[int]]] = []
+    for line in Path(args.capture).read_text(encoding="utf-8").splitlines():
+        rec = json.loads(line)
+        if rec.get("type") == "marker":
+            windows.append([rec["control"], rec.get("widget"),
+                            rec["t_start"], rec["t_end"], {}])
+            per_slot_vals.append({})
+            continue
+        if "hex" not in rec or rec.get("pid") != pid or not windows:
+            continue
+        if not (windows[-1][2] <= rec["t"] <= windows[-1][3] + 0.3):
+            continue
+        data = list(bytes.fromhex(rec["hex"]))
+        if len(data) < 4 or data[0] != 0x01:
+            continue
+        _, slots = NHL_DEVICES[pid]
+        for off in slots:
+            if off + 1 >= len(data):
+                break
+            raw12 = (data[off] | ((data[off + 1] & 0x0F) << 8)) & RAW_MAX
+            per_slot_vals[-1].setdefault(f"knob{off:02d}", []).append(raw12)
+
+    mapping: dict[str, dict] = {}
+    used: set[str] = set()
+    problems = []
+    for (control, widget, *_rest), vals in zip(windows, per_slot_vals):
+        best, best_range = None, -1
+        for slot, series in vals.items():
+            if slot in used or not series:
+                continue
+            rng = max(series) - min(series)
+            if rng > best_range:
+                best, best_range = slot, rng
+        if best is None or best_range < 40:
+            problems.append(f"{control}: no clear movement (best range {best_range})")
+            continue
+        used.add(best)
+        mapping[best] = {"name": control}
+        if widget:
+            mapping[best]["widget"] = widget
+        print(f"  {best} -> {control:18s} (range {best_range})"
+              + (f" -> widget {widget}" if widget else ""))
+
+    out_path = Path(args.out)
+    data_out: dict = {}
+    if out_path.exists():
+        data_out = json.loads(out_path.read_text(encoding="utf-8"))
+    data_out[str(pid)] = mapping
+    out_path.write_text(json.dumps(data_out, indent=2) + "\n", encoding="utf-8")
+    print(f"\nwrote {len(mapping)} mappings for pid 0x{pid:04X} -> {out_path}")
+    for p in problems:
+        print(f"  WARN {p}")
+    if problems:
+        print("re-run the learn session for the missed controls")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="MidiMAT NHL (NI proprietary HID) tap")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -333,9 +465,24 @@ def main(argv: list[str] | None = None) -> int:
     dp.add_argument("--seconds", type=float, default=10)
     dp.add_argument("--out", default="nhl_raw.jsonl")
     dp.add_argument("--pid", help="only this device, e.g. 0x2200 (one X1 MK3)")
+    sub.add_parser("probe", help="enumerate + open-test vendor HID interfaces")
+    for name in ("learn", "learnmap"):
+        lp = sub.add_parser(name, help=f"{name}: guided control naming (see docs)")
+        lp.add_argument("--plan", choices=sorted(PLANS), default="z1")
+        if name == "learn":
+            lp.add_argument("--seconds-per", type=float, default=7)
+            lp.add_argument("--serial", help="limit to one unit (two X1s present)")
+            lp.add_argument("--out", default="nhl_learn.jsonl")
+        else:
+            lp.add_argument("--capture", default="nhl_learn.jsonl")
+            lp.add_argument("--out", default="nhl_map.json")
     args = ap.parse_args(argv)
     if args.cmd == "probe":
         return cmd_probe(args)
+    if args.cmd == "learn":
+        return cmd_learn(args)
+    if args.cmd == "learnmap":
+        return cmd_learnmap(args)
     return cmd_dump(args)
 
 

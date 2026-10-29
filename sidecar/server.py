@@ -209,15 +209,23 @@ def main() -> None:
     nhl = None
     if args.nhl:
         nhl_prev: dict[str, dict] = {}
+        nhl_map: dict[str, dict] = {}
+        map_path = ROOT / "nhl_map.json"
+        if map_path.exists():
+            nhl_map = json.loads(map_path.read_text(encoding="utf-8"))
+            log.info("nhl_map loaded: %s",
+                     {pid: len(m) for pid, m in nhl_map.items()})
 
         def on_nhl(raw: dict) -> None:
             prev = nhl_prev.setdefault(raw["serial"], {})
+            dev_map = nhl_map.get(str(raw["pid"]), {})
             for e in decode_changes(raw["pid"], raw["data"], prev):
-                # provisional: no widget box yet -> HUD-only description card
-                wid = f"nhl:{raw['serial']}.{e['slot']}"
-                emit_midi(wid, e["value"],
-                          f"{device_nick(raw['pid'], raw['serial'])} · {e['name']}",
-                          None)
+                info = dev_map.get(e["slot"], {})
+                label = (f"{device_nick(raw['pid'], raw['serial'])} · "
+                         f"{info.get('name', e['name'])}")
+                wid = info.get("widget") or (
+                    f"nhl:{raw['serial']}.{e['slot']}")
+                emit_midi(wid, e["value"], label, None)
                 log.info("nhl event: %s %s val=%d", raw["serial"], e["name"], e["value"])
 
         nhl = NhlTap(on_nhl, on_status=lambda s: log.info("nhl| %s", s))
