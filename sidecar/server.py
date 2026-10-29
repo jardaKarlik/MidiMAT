@@ -222,6 +222,16 @@ def main() -> None:
 
     try:
         asyncio.run(run_ws(args.ws_port, demo=not args.no_demo))
+    except OSError as e:
+        code = getattr(e, "errno", None) or getattr(e, "winerror", None)
+        if code in (98, 10048):  # EADDRINUSE / WSAEADDRINUSE
+            raise SystemExit(
+                f"port {args.ws_port} already in use — another MidiMAT sidecar is "
+                f"running.\n  Stop it:  .\\scripts\\stop.ps1\n"
+                f"  Or start with run.ps1 (auto-replaces the old instance),\n"
+                f"  or pick another port: --ws-port 8788"
+            ) from None
+        raise
     except KeyboardInterrupt:
         log.info("shutting down")
     finally:

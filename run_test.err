@@ -1,0 +1,21 @@
+11:11:41.177 INFO    midimat | overlay:  http://127.0.0.1:8080/overlay/index.html?debug=1
+11:11:41.178 INFO    midimat | widgets:  16 loaded from C:\Users\jaros\CascadeProjects\MidiMAT\layout.json
+11:11:41.179 INFO    midimat | NHL tap started (native mode — wake X1s with a button press)
+11:11:41.212 INFO    websockets.server | server listening on 127.0.0.1:8787
+11:11:41.215 INFO    midimat | WebSocket ready on ws://127.0.0.1:8787 (demo=False)
+11:11:41.245 INFO    midimat | nhl| nhl listening on 'TRAKTOR X1 MK3 HID' (2411742B)
+11:11:41.250 INFO    midimat | nhl| nhl listening on 'Traktor Z1 MK2 HID' (00DDBAB2)
+11:11:41.254 INFO    midimat | nhl| nhl listening on 'Traktor Kontrol F1' (F89850DF)
+11:11:41.260 INFO    midimat | nhl| nhl listening on 'TRAKTOR X1 MK3 HID' (241196A3)
+Exception in thread nhl-tap:
+Traceback (most recent call last):
+  File "C:\Users\jaros\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\jaros\CascadeProjects\MidiMAT\sidecar\nhl_tap.py", line 278, in run
+    self._refresh()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\jaros\CascadeProjects\MidiMAT\sidecar\nhl_tap.py", line 253, in _refresh
+    if path not in wanted:
+       ^^^^^^^^^^^^^^^^^^
+TypeError: cannot use 'dict' as a dict key (unhashable type: 'dict')

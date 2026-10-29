@@ -1,0 +1,2 @@
+[midimat] stopping previous sidecar (PID 14952, port 8080)
+[midimat] sidecar -> http://127.0.0.1:8080/overlay/index.html?debug=1
