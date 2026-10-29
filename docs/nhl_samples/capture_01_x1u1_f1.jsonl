@@ -1,0 +1,21 @@
+{"device": {"vendor_id": 6092, "product_id": 8704, "serial_number": "2411742B", "release_number": 39, "manufacturer_string": "NATIVE INSTRUMENTS", "product_string": "TRAKTOR X1 MK3 HID", "usage_page": 65281, "usage": 0, "interface_number": 2, "bus_type": 1}, "ts_start": 1793265561.8786936}
+{"device": {"vendor_id": 6092, "product_id": 9216, "serial_number": "00DDBAB2", "release_number": 50, "manufacturer_string": "Native Instruments", "product_string": "Traktor Z1 MK2 HID", "usage_page": 65281, "usage": 0, "interface_number": 5, "bus_type": 1}, "ts_start": 1793265561.8787775}
+{"device": {"vendor_id": 6092, "product_id": 4384, "serial_number": "F89850DF", "release_number": 11, "manufacturer_string": "Native Instruments", "product_string": "Traktor Kontrol F1", "usage_page": 65281, "usage": 0, "interface_number": 0, "bus_type": 1}, "ts_start": 1793265561.8787985}
+{"device": {"vendor_id": 6092, "product_id": 8704, "serial_number": "241196A3", "release_number": 39, "manufacturer_string": "NATIVE INSTRUMENTS", "product_string": "TRAKTOR X1 MK3 HID", "usage_page": 65281, "usage": 0, "interface_number": 2, "bus_type": 1}, "ts_start": 1793265561.8788097}
+{"t": 1793265588.9291, "serial": "F89850DF", "pid": 4384, "len": 22, "hex": "010000040000c80798078d09b7067e09f00ff70f250d"}
+{"t": 1793265589.0482, "serial": "F89850DF", "pid": 4384, "len": 22, "hex": "010000000000c80798078d09b7067e09f00ff70f250d"}
+{"t": 1793265594.5908, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e703ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265596.0861, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01010000000000e703ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265596.3554, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01010000000000e704ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265596.4613, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01010000000000e705ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265597.145, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01010000000000e706ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265597.4773, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01010000000000e707ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265599.6469, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e707ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265599.8948, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e708ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265599.9699, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e709ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265600.078, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e70aff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265601.4008, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e709ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265602.3758, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000001000e709ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265602.5484, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e709ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265603.8096, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01020000000000e709ff07ff07ff07ff07ff07bc08340bd509"}
+{"t": 1793265603.9284, "serial": "2411742B", "pid": 8704, "len": 25, "hex": "01000000000000e709ff07ff07ff07ff07ff07bc08340bd509"}

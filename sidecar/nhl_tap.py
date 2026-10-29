@@ -86,48 +86,61 @@ def cmd_dump(args: argparse.Namespace) -> int:
         devs = [d for d in devs if d["product_id"] == int(args.pid, 0)]
     if not devs:
         raise SystemExit("no vendor NHL interfaces found (X1s in MIDI mode only?)")
-    out = open(args.out, "a", encoding="utf-8") if args.out else None
-    deadline = time.time() + args.seconds
-    total = 0
+
+    handles: list[tuple[dict, object]] = []
     for d in devs:
         try:
             dev = hid.device()
             dev.open_path(d["path"])
             dev.set_nonblocking(True)
+            handles.append((d, dev))
         except Exception as e:  # noqa: BLE001
-            log = f"pid=0x{d['product_id']:04X} serial={d['serial_number']!r}"
-            print(f"open FAIL {log}: {e}")
-            continue
-        info = (f"pid=0x{d['product_id']:04X} iface=MI_{d['interface_number']:02d} "
-                f"serial={d['serial_number']!r}")
-        print(f"dumping {info} for {args.seconds:.0f}s — turn knobs/press buttons!")
-        rec = {"device": {k: (v.decode(errors="replace") if isinstance(v, bytes) else v)
-                          for k, v in d.items() if k != "path"},
-               "ts_start": time.time()}
-        if out:
+            print(f"open FAIL pid=0x{d['product_id']:04X} "
+                  f"serial={d['serial_number']!r}: {e}")
+    if not handles:
+        raise SystemExit("nothing opened")
+
+    out = open(args.out, "a", encoding="utf-8") if args.out else None
+    if out:
+        for d, _ in handles:
+            rec = {"device": {k: (v.decode(errors="replace") if isinstance(v, bytes) else v)
+                              for k, v in d.items() if k != "path"},
+                   "ts_start": time.time()}
             out.write(json.dumps(rec) + "\n")
-        while time.time() < deadline:
+
+    print(f"capturing {len(handles)} interfaces for {args.seconds:.0f}s — "
+          f"turn knobs / press buttons / sweep strip on ALL units NOW!", flush=True)
+    deadline = time.time() + args.seconds
+    counts: dict[str, int] = {}
+    total = 0
+    while time.time() < deadline:
+        progressed = False
+        for d, dev in handles:
             rep = dev.read(256)
             if rep:
+                progressed = True
                 total += 1
-                entry = {"t": round(time.time(), 4),
-                         "serial": d["serial_number"],
-                         "len": len(rep),
+                serial = d["serial_number"]
+                counts[serial] = counts.get(serial, 0) + 1
+                entry = {"t": round(time.time(), 4), "serial": serial,
+                         "pid": d["product_id"], "len": len(rep),
                          "hex": bytes(rep).hex()}
-                print(f"  {entry['t']} [{d['serial_number']}] len={len(rep):3d} "
-                      f"{entry['hex']}")
+                print(f"  {entry['t']} [{serial}] len={len(rep):3d} {entry['hex']}")
                 if out:
                     out.write(json.dumps(entry) + "\n")
-            else:
-                time.sleep(0.002)  # don't spin
+        if not progressed:
+            time.sleep(0.002)  # don't spin
+
+    for _, dev in handles:
         dev.close()
     if out:
         out.close()
-        print(f"\n{total} reports appended to {args.out}")
-    else:
-        print(f"\n{total} reports captured")
+    print(f"\n{total} reports: " + ", ".join(f"{s}×{c}" for s, c in counts.items())
+          or "0 reports")
+    if out:
+        print(f"appended to {args.out}")
     if total == 0:
-        print("no traffic — is the X1 in NATIVE mode with Traktor open and in use?")
+        print("no traffic — X1s in NATIVE mode? Traktor open? controls actually moved?")
     return 0
 
 

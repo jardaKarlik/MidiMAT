@@ -58,6 +58,38 @@
   (b) **USB-level sniffing** (USBPcap + Wireshark, admin driver): captures the wire even
       if the app is exclusive. Last resort — heavy and fragile.
 
+## ✅ DECISIVE TEST PASSED (2026-10-29, Traktor Pro 4 running, PID 45440)
+
+**NHL input reports stream to our reader while Traktor runs** — all vendor interfaces
+openable concurrently, reports captured from X1 MK3 unit 1, Z1 MK2, and F1
+(samples: `docs/nhl_samples/capture_01_x1u1_f1.jsonl`, `capture_02_z1_faders.jsonl`).
+⇒ Strategy A confirmed: DJ keeps **native mode**; MidiMAT taps NHL directly.
+(MIDI-OX cannot see this traffic — it's MIDI-only; NHL is vendor HID.)
+
+## Report formats — first-pass decode (from live captures)
+
+All reports start with `01` (report id / protocol tag).
+
+**X1 MK3 — 25 bytes** (`TRAKTOR X1 MK3 HID`):
+| Bytes | Hypothesis | Evidence |
+|---|---|---|
+| [1] | page/mode enum (0/1/2/4 seen; 0 at idle) | toggles near FX-page/shift presses |
+| [2],[5] | button bitfields (single-bit events: 0x02, 0x10 seen) | momentary one-report blips |
+| [7:9] | **FX knob 1 — absolute, LE16 ≈ 12-bit (0-4095)** | `e7 03→e7 04` = +256 fast turn; `e9 09→e0 09` = −1 slow turns; wrap 0x9E0→0x9EF on direction change |
+| [9:19] | 5 × knob LE16 pairs, rest at `ff 07` = 0x7FF = 2047 center | untouched knobs sit at center detent |
+| [19:25] | 3 × LE16 (0x08BC, 0x0B34, 0x09D5 ≈ around center) | browse/tempo/strip candidates |
+
+**Z1 MK2 — 35 bytes** (`Traktor Z1 MK2 HID`): knobs/faders as LE16 pairs
+(`b0 08`, `0b 06`, `40 07`, `70 07` ≈ faders near center 1856/1904, one `ff 0f` = 0xFFF
+max); **fader/crossfader sweep visible at [31:33] LE16** (`12 00→76 00` fast sweep).
+
+**F1 — 22 bytes** (`Traktor Kontrol F1`): 8 × LE16 knob/pad values
+(`c8 07`, `98 07`, `f0 0f`≈4080 …).
+
+**Next (Phase 2 RE):** guided `nhl_tap learn` — one control at a time, baseline-diff
+reports → per-control byte maps → `nhl_map.json` (serial + offset → control) feeding the
+same Resolver pipeline as MIDI. Resolution beyond MIDI (12-bit) is free once decoded.
+
 ## Tooling
 
 - `python -m sidecar.nhl_tap probe` — enumerate + open-test vendor HID (usage page ≥ 0xFF00)
