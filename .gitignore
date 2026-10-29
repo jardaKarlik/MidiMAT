@@ -17,4 +17,7 @@ Thumbs.db
 server.log
 server.err
 server.pid
-nhl_raw.jsonl
+set_capture.log
+set_capture.err
+set_capture.pid
+nhl_*.jsonl
