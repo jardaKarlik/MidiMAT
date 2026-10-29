@@ -33,6 +33,7 @@ if str(ROOT) not in sys.path:
 
 from sidecar.midi_tap import MidiTap  # noqa: E402
 from sidecar.mapping import Resolver, load_config  # noqa: E402
+from sidecar.nhl_tap import NhlTap, decode_changes, device_nick  # noqa: E402
 
 log = logging.getLogger("midimat")
 
@@ -155,6 +156,9 @@ def main() -> None:
     parser.add_argument("--midi-ports", nargs="+", default=None, metavar="SUBSTR",
                         help="override config midi ports, e.g. --midi-ports 'X1 MK3' "
                              "'Z1 MK2' (implies --midi)")
+    parser.add_argument("--nhl", action="store_true",
+                        help="listen to NHL (vendor HID) reports — controllers stay in "
+                             "NATIVE mode; provisional labels until learn session")
     parser.add_argument("--config", default=str(ROOT / "midimat.config.json"))
     args = parser.parse_args()
 
@@ -199,6 +203,23 @@ def main() -> None:
                         "`python -m sidecar.midi_tap watch --port %s` and fill cc_map.json",
                         " ".join(port_hints))
 
+    nhl = None
+    if args.nhl:
+        nhl_prev: dict[str, dict] = {}
+
+        def on_nhl(raw: dict) -> None:
+            prev = nhl_prev.setdefault(raw["serial"], {})
+            for e in decode_changes(raw["pid"], raw["data"], prev):
+                # provisional: no widget box yet -> HUD-only description card
+                wid = f"nhl:{raw['serial']}.{e['slot']}"
+                emit_midi(wid, e["value"],
+                          f"{device_nick(raw['pid'], raw['serial'])} · {e['name']}",
+                          None)
+
+        nhl = NhlTap(on_nhl, on_status=lambda s: log.info("nhl| %s", s))
+        nhl.start()
+        log.info("NHL tap started (native mode — wake X1s with a button press)")
+
     try:
         asyncio.run(run_ws(args.ws_port, demo=not args.no_demo))
     except KeyboardInterrupt:
@@ -206,6 +227,8 @@ def main() -> None:
     finally:
         if tap:
             tap.stop()
+        if nhl:
+            nhl.stop()
 
 
 if __name__ == "__main__":

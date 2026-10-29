@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import threading
 import time
 
 try:
@@ -181,6 +182,133 @@ def cmd_dump(args: argparse.Namespace) -> int:
     if total == 0:
         print("no traffic — X1s in NATIVE mode? Traktor open? controls actually moved?")
     return 0
+
+
+# --- Live tap (feeds the sidecar server) -------------------------------------
+
+NHL_DEVICES = {  # pid -> (nick, knob-slot byte offsets for LE16 pairs)
+    0x2200: ("X1", list(range(7, 24, 2))),   # X1 MK3: 9 analog slots + buttons [1..6]
+    0x2400: ("Z1", list(range(3, 34, 2))),   # Z1 MK2: knobs/faders incl. crossfader @31
+    0x1120: ("F1", list(range(6, 21, 2))),   # F1: 8 analog slots + buttons [1..5]
+}
+BUTTON_OFFSETS = {0x2200: range(1, 7), 0x2400: range(1, 3), 0x1120: range(1, 6)}
+RAW_MAX = 4095  # 12-bit
+
+
+def device_nick(pid: int, serial: str) -> str:
+    base = NHL_DEVICES.get(pid, ("NI", []))[0]
+    return f"{base}·{serial[-4:]}" if base == "X1" else base
+
+
+def decode_changes(pid: int, data: list[int], prev: dict) -> list[dict]:
+    """Diff a raw report against per-serial previous state -> normalized events.
+
+    PROVISIONAL naming (byte-offset based) until the guided learn session builds
+    real control names -> nhl_map.json. Values normalized 0-4095 -> 0-127.
+    """
+    nick_slots = NHL_DEVICES.get(pid)
+    if not nick_slots or len(data) < 4 or data[0] != 0x01:
+        return []
+    _, slots = nick_slots
+    events: list[dict] = []
+    for off in slots:
+        if off + 1 >= len(data):
+            break
+        raw12 = data[off] | ((data[off + 1] & 0x0F) << 8)
+        if raw12 > RAW_MAX:
+            raw12 &= RAW_MAX
+        if prev.get(off) != raw12:
+            prev[off] = raw12
+            events.append({"slot": f"knob{off:02d}", "kind": "knob",
+                           "name": f"Knob[{off}:{off + 2}]",
+                           "value": round(raw12 * 127 / RAW_MAX),
+                           "raw": raw12})
+    for off in BUTTON_OFFSETS.get(pid, ()):  # one-shot bit events
+        if off >= len(data):
+            break
+        bit = data[off]
+        if prev.get(f"b{off}") != bit:
+            prev[f"b{off}"] = bit
+            events.append({"slot": f"btn{off:02d}", "kind": "button",
+                           "name": f"Btn[{off}]={'ON' if bit else 'off'}",
+                           "value": 127 if bit else 0,
+                           "raw": bit})
+    return events
+
+
+class NhlTap(threading.Thread):
+    """Background NHL listener over all vendor-HID interfaces (hot-plug + sleep
+    resilient: rescans every 3 s, refreshes handles after 15 s of total silence)."""
+
+    def __init__(self, callback, on_status=None):
+        super().__init__(daemon=True, name="nhl-tap")
+        self.callback = callback
+        self.on_status = on_status or (lambda s: None)
+        self.handles: list[tuple[dict, object]] = []
+        self._stop = threading.Event()
+
+    def _refresh(self) -> None:
+        wanted = {d["path"]: d for d in ni_devices() if is_vendor(d)}
+        for path, dev in list(self.handles):
+            if path not in wanted:
+                try:
+                    dev.close()
+                except Exception:  # noqa: BLE001
+                    pass
+                self.handles = [h for h in self.handles if h[0]["path"] != path]
+        for path, d in wanted.items():
+            if any(h[0]["path"] == path for h in self.handles):
+                continue
+            try:
+                dev = hid.device()
+                dev.open_path(path)
+                dev.set_nonblocking(True)
+                self.handles.append((d, dev))
+                self.on_status(f"nhl listening on {d['product_string']!r} "
+                               f"({d['serial_number']})")
+            except Exception as e:  # noqa: BLE001
+                self.on_status(f"nhl open fail {d['serial_number']!r}: {e}")
+
+    def run(self) -> None:
+        last_refresh = 0.0
+        last_activity = time.time()
+        while not self._stop.is_set():
+            now = time.time()
+            if now - last_refresh >= 3 or not self.handles:
+                self._refresh()
+                last_refresh = now
+            activity = False
+            for d, dev in self.handles:
+                try:
+                    rep = dev.read(256)
+                except Exception:  # noqa: BLE001
+                    rep = []
+                if rep:
+                    activity = True
+                    self.callback({"serial": d["serial_number"],
+                                   "pid": d["product_id"], "data": list(rep)})
+            if activity:
+                last_activity = time.time()
+            elif now - last_activity >= 15:  # everyone silent -> force reopen
+                for _, dev in self.handles:
+                    try:
+                        dev.close()
+                    except Exception:  # noqa: BLE001
+                        pass
+                self.handles.clear()
+                last_activity = now
+                self.on_status("nhl: all silent >15s — reopening handles")
+            else:
+                time.sleep(0.002)
+
+    def stop(self) -> None:
+        self._stop.set()
+        for _, dev in self.handles:
+            try:
+                dev.close()
+            except Exception:  # noqa: BLE001
+                pass
+        self.handles.clear()
 
 
 def main(argv: list[str] | None = None) -> int:
