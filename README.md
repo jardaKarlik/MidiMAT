@@ -35,8 +35,12 @@ that keeps latency at ~50 ms instead of 200–1000 ms.
 
 ### Option A — static demo (no server, 10 seconds)
 
-Open `overlay/index.html?demo=1` in a browser — widgets auto-glow in sequence.
-Click a widget to pulse it, `Space` pauses the demo.
+Open `overlay/index.html?demo=1` in a browser — widgets auto-glow in sequence and the
+**bottom-center HUD card** shows each control's name + value. Click a widget to pulse it,
+`Space` pauses the demo.
+
+Tip: `overlay/index.html?shot=fx1_drywet` renders one deterministic still-frame
+(glow + HUD card at fixed value) — handy for screenshots/tuning without waiting.
 
 ### Option B — with sidecar server (the real plumbing)
 

@@ -13,6 +13,15 @@
     "blur_gain": 26,
     "corner_radius": 14
   },
+  "hud": {
+    "enabled": true,
+    "ttl_ms": 1600,
+    "anchor": "bottom-center",
+    "margin_bottom": 48,
+    "width": 640,
+    "height": 88,
+    "show_value_pct": true
+  },
   "widgets": [
     {
       "id": "deck_a_filter",
