@@ -61,8 +61,10 @@ mapped-but-not-yet-calibrated control still tells the viewer what's happening.
 ## Bring-up checklist (acceptance for Phase 1)
 
 - [ ] `python -m sidecar.midi_tap list` → X1 ports visible
-- [ ] `watch --port "X1 MK3"` **with Traktor open** → moving a knob prints `ch/#/val`
-      (the one open hardware question: does X1 send MIDI while Traktor claims HID?)
+- [ ] **NHL decisive test** (X1 native + Traktor + `nhl_tap dump` while turning knobs) —
+      see `docs/NHL_PROTOCOL.md`; decides native-HID tap vs MIDI-mode strategy
+- [ ] `watch --port X1 Z1` **with Traktor open** → moving a knob prints `ch/#/val`
+      (works when X1 is in MIDI mode; note MK3 must be in MIDI mode for this path)
 - [ ] Fill `cc_map.json` for the controls you care about (label + widget id)
 - [ ] `python -m sidecar.calibrate` → boxes match the real Traktor GUI (Extended layout)
 - [ ] `scripts\run.ps1 --midi --no-demo` → turn a knob → **glow + HUD card**, <100 ms
