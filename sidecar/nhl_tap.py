@@ -26,6 +26,7 @@ import argparse
 import json
 import threading
 import time
+from pathlib import Path
 
 try:
     import hid  # cython-hidapi
@@ -465,7 +466,6 @@ def main(argv: list[str] | None = None) -> int:
     dp.add_argument("--seconds", type=float, default=10)
     dp.add_argument("--out", default="nhl_raw.jsonl")
     dp.add_argument("--pid", help="only this device, e.g. 0x2200 (one X1 MK3)")
-    sub.add_parser("probe", help="enumerate + open-test vendor HID interfaces")
     for name in ("learn", "learnmap"):
         lp = sub.add_parser(name, help=f"{name}: guided control naming (see docs)")
         lp.add_argument("--plan", choices=sorted(PLANS), default="z1")
