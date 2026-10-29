@@ -13,6 +13,25 @@ const DEMO = qs.get("demo") === "1";
 const DEBUG = qs.get("debug") === "1";
 const WS_URL = "ws://127.0.0.1:8787";
 
+// Built-in fallback so the overlay still glows when layout.json can't be fetched
+// (e.g. the page was opened directly from disk). Keep in sync with ../layout.json.
+const DEFAULT_LAYOUT = {
+  canvas: { width: 1920, height: 1080 },
+  theme: {
+    deck_colors: { A: "#33ccff", B: "#3dff9e", FX: "#ffcc33" },
+    label_bg: "rgba(0, 0, 0, 0.6)",
+    label_color: "#ffffff",
+  },
+  glow: { ttl_ms: 600, stroke_width: 3, blur_base: 12, blur_gain: 26, corner_radius: 14 },
+  widgets: [
+    { id: "deck_a_filter", label: "Deck A · Filter", deck: "A", box: { x: 300, y: 430, w: 110, h: 110 } },
+    { id: "deck_a_move", label: "Deck A · Move", deck: "A", box: { x: 470, y: 430, w: 110, h: 110 } },
+    { id: "fx1_size", label: "FX1 · Flanger Size", deck: "FX", box: { x: 900, y: 300, w: 96, h: 96 } },
+    { id: "fx1_drywet", label: "FX1 · Dry/Wet", deck: "FX", box: { x: 1050, y: 300, w: 96, h: 96 } },
+    { id: "master_gain", label: "Master · Gain", deck: "B", box: { x: 1560, y: 700, w: 80, h: 160 } },
+  ],
+};
+
 const canvas = document.getElementById("stage");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
@@ -20,6 +39,7 @@ const statusEl = document.getElementById("status");
 let layout = null;
 const state = new Map(); // widget id -> { value, last }
 let demoPaused = false;
+let wsConnected = false;
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -34,21 +54,32 @@ function poke(id, value) {
   s.last = performance.now();
 }
 
-function setStatus(text) {
-  if (!DEBUG) return;
+function setStatus(text, isError = false) {
+  if (!text) {
+    if (!DEBUG) statusEl.hidden = true; // keep pill visible when debugging
+    return;
+  }
   statusEl.hidden = false;
   statusEl.textContent = text;
+  statusEl.style.borderColor = isError ? "#ff5555" : "rgba(255,255,255,0.25)";
 }
 
 /* ---------------- WebSocket mode ---------------- */
 function connectWS() {
   const ws = new WebSocket(WS_URL);
-  ws.onopen = () => setStatus(`ws ${WS_URL} · connected`);
-  ws.onclose = () => {
-    setStatus(`ws ${WS_URL} · reconnecting…`);
-    setTimeout(connectWS, 1000);
+  ws.onopen = () => {
+    wsConnected = true;
+    setStatus(DEBUG ? `ws ${WS_URL} · connected` : null);
   };
-  ws.onerror = () => ws.close();
+  ws.onclose = () => {
+    wsConnected = false;
+    setStatus(
+      `MidiMAT: sidecar not reachable (${WS_URL}) — start it with .\\scripts\\run.ps1` +
+        `  ·  attract demo running`,
+      true,
+    );
+    setTimeout(connectWS, 1500);
+  };
   ws.onmessage = (e) => {
     let msg;
     try {
@@ -61,11 +92,14 @@ function connectWS() {
   };
 }
 
-/* ---------------- demo mode ---------------- */
+/* ---------------- demo / attract mode ---------------- */
 async function demoLoop() {
   let i = 0;
   while (true) {
-    if (!demoPaused && layout) {
+    // In demo mode it's the show; in WS mode it's an "attract" fallback that only
+    // runs while the sidecar is disconnected (no sidecar = no real events anyway).
+    const attract = DEMO || !wsConnected;
+    if (attract && !demoPaused && layout) {
       const w = layout.widgets[i % layout.widgets.length];
       i++;
       for (let s = 0; s <= 22; s++) {
@@ -178,15 +212,20 @@ function applyLayout(newLayout) {
 }
 
 async function init() {
-  const resp = await fetch("../layout.json");
-  applyLayout(await resp.json());
-
-  if (DEMO) {
-    setStatus("demo mode · click=pulse, Space=pause");
-    demoLoop();
-  } else {
-    connectWS();
+  try {
+    const resp = await fetch("../layout.json");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    applyLayout(await resp.json());
+  } catch (err) {
+    // file:// origin or sidecar down — never die silently, fall back and SAY so
+    console.error("MidiMAT: layout.json not loadable:", err);
+    applyLayout(DEFAULT_LAYOUT);
+    setStatus(`MidiMAT: layout.json not loadable (${err.message}) — using built-in copy`, true);
   }
+
+  if (DEMO) setStatus("demo mode · click=pulse, Space=pause");
+  else connectWS();
+  demoLoop(); // the show in demo mode; attract fallback in ws mode while disconnected
 
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
