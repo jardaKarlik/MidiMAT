@@ -170,20 +170,53 @@ function drawGlow(widget, intensity, value, now) {
 
   ctx.save();
 
+  if (widget.shape === "circle") {
+    // round knob: bloom ring + crisp ring + 270° value arc
+    const cx = box.x + box.w / 2;
+    const cy = box.y + box.h / 2;
+    const r = Math.min(box.w, box.h) / 2 - glow.stroke_width;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse;
+    ctx.lineWidth = glow.stroke_width;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.35 + 0.65 * intensity;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = glow.stroke_width - 1;
+    ctx.globalAlpha = Math.min(1, 0.5 + intensity);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    // value arc: -225° .. +45° sweep, like a DJ knob position indicator
+    const a0 = -Math.PI * 0.75;
+    const a1 = a0 + Math.PI * 1.5 * (value / 127);
+    ctx.globalAlpha = 0.45 + 0.55 * intensity;
+    ctx.lineWidth = Math.max(3, glow.stroke_width + 1);
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - glow.stroke_width - 1, a0, a1);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  const radius = widget.shape === "rect" ? 5 : glow.corner_radius;
   // bloom pass
   ctx.shadowColor = color;
   ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse;
   ctx.lineWidth = glow.stroke_width;
   ctx.strokeStyle = color;
   ctx.globalAlpha = 0.35 + 0.65 * intensity;
-  roundRect(box.x, box.y, box.w, box.h, glow.corner_radius);
+  roundRect(box.x, box.y, box.w, box.h, radius);
   ctx.stroke();
 
   // crisp core pass (bloom alone reads muddy at low stream bitrates)
   ctx.shadowBlur = 0;
   ctx.lineWidth = glow.stroke_width - 1;
   ctx.globalAlpha = Math.min(1, 0.5 + intensity);
-  roundRect(box.x, box.y, box.w, box.h, glow.corner_radius);
+  roundRect(box.x, box.y, box.w, box.h, radius);
   ctx.stroke();
 
   // value bar under the widget (viewers can't see tiny GUI knob positions)

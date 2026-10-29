@@ -24,7 +24,13 @@ from threading import Thread
 import websockets
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-LAYOUT = json.loads((ROOT / "layout.json").read_text(encoding="utf-8"))
+
+
+def load_layout() -> dict:
+    return json.loads((ROOT / "layout.json").read_text(encoding="utf-8"))
+
+
+LAYOUT = load_layout()
 
 import sys  # noqa: E402
 
@@ -81,7 +87,8 @@ def start_http(port: int) -> ThreadingHTTPServer:
 async def ws_handler(ws):
     _clients.add(ws)
     log.info("overlay connected (%d client(s))", len(_clients))
-    await ws.send(json.dumps({"type": "hello", "layout": LAYOUT}))
+    # fresh read per hello: layout.json edits must reach overlays without a restart
+    await ws.send(json.dumps({"type": "hello", "layout": load_layout()}))
     try:
         async for msg in ws:  # overlay may send calibration clicks in later phases
             log.debug("from overlay: %s", msg)
