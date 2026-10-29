@@ -1,0 +1,48 @@
+{
+  "9216": {
+    "knob11": {
+      "name": "Filter A",
+      "widget": "z1_fltr_a"
+    },
+    "knob05": {
+      "name": "EQ High A",
+      "widget": "z1_eq_hi_a"
+    },
+    "knob07": {
+      "name": "EQ Mid A",
+      "widget": "z1_eq_mid_a"
+    },
+    "knob09": {
+      "name": "EQ Low A",
+      "widget": "z1_eq_lo_a"
+    },
+    "knob29": {
+      "name": "Channel Fader A",
+      "widget": "z1_fader_a"
+    },
+    "knob21": {
+      "name": "Filter B",
+      "widget": "z1_fltr_b"
+    },
+    "knob15": {
+      "name": "EQ High B",
+      "widget": "z1_eq_hi_b"
+    },
+    "knob17": {
+      "name": "EQ Mid B",
+      "widget": "z1_eq_mid_b"
+    },
+    "knob19": {
+      "name": "EQ Low B",
+      "widget": "z1_eq_lo_b"
+    },
+    "knob31": {
+      "name": "Channel Fader B",
+      "widget": "z1_fader_b"
+    },
+    "knob33": {
+      "name": "Crossfader",
+      "widget": "z1_xfade"
+    }
+  }
+}
