@@ -20,5 +20,8 @@ server.pid
 set_capture.log
 set_capture.err
 set_capture.pid
-*.jsonlrun_test.log
+run_test.log
 run_test.err
+
+# Capture data (docs/nhl_samples/ reference samples stay tracked)
+*.jsonl
