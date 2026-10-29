@@ -47,6 +47,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--layout", default="layout.json")
     ap.add_argument("--skip-origin", action="store_true",
                     help="keep existing origin; only recapture widget boxes")
+    ap.add_argument("--origin-only", action="store_true",
+                    help="recapture ONLY the origin and SHIFT all existing boxes "
+                         "by the difference (fixes a wrong-origin run without "
+                         "re-hovering every control)")
     ap.add_argument("--only", help="comma-separated widget ids to recapture")
     args = ap.parse_args(argv)
 
@@ -55,6 +59,27 @@ def main(argv: list[str] | None = None) -> int:
     only = set(args.only.split(",")) if args.only else None
 
     origin = layout.get("origin", {"x": 0, "y": 0})
+
+    if args.origin_only:
+        print("== Recapture origin ==")
+        print(f"current origin = {origin}")
+        print("Hover the mouse over the TOP-LEFT corner of the area OBS captures")
+        print("(the actual Traktor window — NOT a preview inside Streamlabs/OBS).")
+        input("Press Enter there... ")
+        ox, oy = cursor_pos()
+        dx, dy = origin["x"] - ox, origin["y"] - oy
+        for w in layout["widgets"]:
+            w["box"]["x"] += dx
+            w["box"]["y"] += dy
+        layout["origin"] = {"x": ox, "y": oy}
+        backup = layout_path.with_suffix(".json.bak")
+        shutil.copy2(layout_path, backup)
+        layout_path.write_text(json.dumps(layout, indent=2) + "\n", encoding="utf-8")
+        print(f"origin {origin} -> ({ox}, {oy}); shifted all boxes by "
+              f"({dx}, {dy}) (backup: {backup.name})")
+        print("Refresh the OBS/Streamlabs browser source to see the result.")
+        return 0
+
     if not args.skip_origin:
         print("== Step 1: OBS crop origin ==")
         print("Hover the mouse over the TOP-LEFT corner of the area OBS captures")
