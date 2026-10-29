@@ -25,3 +25,5 @@ run_test.err
 
 # Capture data (docs/nhl_samples/ reference samples stay tracked)
 *.jsonl
+vision_preview.png
+vision_detections.json
