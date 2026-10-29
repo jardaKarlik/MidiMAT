@@ -1,8 +1,14 @@
 {
   "name": "default",
   "canvas": { "width": 1920, "height": 1080 },
+  "origin": { "x": 0, "y": 0 },
   "theme": {
-    "deck_colors": { "A": "#33ccff", "B": "#3dff9e", "FX": "#ffcc33" },
+    "deck_colors": {
+      "A": "#33ccff",
+      "B": "#3dff9e",
+      "FX": "#ffcc33",
+      "AB": "#ffffff"
+    },
     "label_bg": "rgba(0, 0, 0, 0.6)",
     "label_color": "#ffffff"
   },
@@ -23,35 +29,37 @@
     "show_value_pct": true
   },
   "widgets": [
-    {
-      "id": "deck_a_filter",
-      "label": "Deck A · Filter",
-      "deck": "A",
-      "box": { "x": 300, "y": 430, "w": 110, "h": 110 }
-    },
-    {
-      "id": "deck_a_move",
-      "label": "Deck A · Move",
-      "deck": "A",
-      "box": { "x": 470, "y": 430, "w": 110, "h": 110 }
-    },
-    {
-      "id": "fx1_size",
-      "label": "FX1 · Flanger Size",
-      "deck": "FX",
-      "box": { "x": 900, "y": 300, "w": 96, "h": 96 }
-    },
-    {
-      "id": "fx1_drywet",
-      "label": "FX1 · Dry/Wet",
-      "deck": "FX",
-      "box": { "x": 1050, "y": 300, "w": 96, "h": 96 }
-    },
-    {
-      "id": "master_gain",
-      "label": "Master · Gain",
-      "deck": "B",
-      "box": { "x": 1560, "y": 700, "w": 80, "h": 160 }
-    }
+    { "id": "fx1_size", "label": "FX1 · Flanger Size", "deck": "FX",
+      "box": { "x": 240, "y": 120, "w": 96, "h": 96 } },
+    { "id": "fx1_drywet", "label": "FX1 · Dry/Wet", "deck": "FX",
+      "box": { "x": 380, "y": 120, "w": 96, "h": 96 } },
+    { "id": "deck_a_filter", "label": "Deck A · Filter", "deck": "A",
+      "box": { "x": 300, "y": 430, "w": 110, "h": 110 } },
+    { "id": "deck_a_move", "label": "Deck A · Move", "deck": "A",
+      "box": { "x": 470, "y": 430, "w": 110, "h": 110 } },
+    { "id": "master_gain", "label": "Master · Gain", "deck": "AB",
+      "box": { "x": 1560, "y": 700, "w": 80, "h": 160 } },
+    { "id": "z1_fltr_a", "label": "Z1 · Filter A", "deck": "A",
+      "box": { "x": 876, "y": 260, "w": 72, "h": 72 } },
+    { "id": "z1_eq_hi_a", "label": "Z1 · EQ High A", "deck": "A",
+      "box": { "x": 880, "y": 360, "w": 64, "h": 64 } },
+    { "id": "z1_eq_mid_a", "label": "Z1 · EQ Mid A", "deck": "A",
+      "box": { "x": 880, "y": 450, "w": 64, "h": 64 } },
+    { "id": "z1_eq_lo_a", "label": "Z1 · EQ Low A", "deck": "A",
+      "box": { "x": 880, "y": 540, "w": 64, "h": 64 } },
+    { "id": "z1_fader_a", "label": "Z1 · Channel Fader A", "deck": "A",
+      "box": { "x": 892, "y": 630, "w": 40, "h": 150 } },
+    { "id": "z1_fltr_b", "label": "Z1 · Filter B", "deck": "B",
+      "box": { "x": 996, "y": 260, "w": 72, "h": 72 } },
+    { "id": "z1_eq_hi_b", "label": "Z1 · EQ High B", "deck": "B",
+      "box": { "x": 1000, "y": 360, "w": 64, "h": 64 } },
+    { "id": "z1_eq_mid_b", "label": "Z1 · EQ Mid B", "deck": "B",
+      "box": { "x": 1000, "y": 450, "w": 64, "h": 64 } },
+    { "id": "z1_eq_lo_b", "label": "Z1 · EQ Low B", "deck": "B",
+      "box": { "x": 1000, "y": 540, "w": 64, "h": 64 } },
+    { "id": "z1_fader_b", "label": "Z1 · Channel Fader B", "deck": "B",
+      "box": { "x": 1012, "y": 630, "w": 40, "h": 150 } },
+    { "id": "z1_xfade", "label": "Z1 · Crossfader", "deck": "AB",
+      "box": { "x": 860, "y": 830, "w": 240, "h": 44 } }
   ]
 }

@@ -131,6 +131,24 @@ def main() -> int:
     check(d is None, "port-scoped entries ignore other ports' identical keys")
     Path(dual).unlink()
 
+    # --- layout sanity (incl. Z1 mixer widget set) ---------------------------
+    layout = json.loads((ROOT / "layout.json").read_text(encoding="utf-8"))
+    ids = [w["id"] for w in layout["widgets"]]
+    check(len(ids) == len(set(ids)), f"layout widget ids unique ({len(ids)} widgets)")
+    cw, ch_ = layout["canvas"]["width"], layout["canvas"]["height"]
+    inside = all(0 <= w["box"]["x"] and 0 <= w["box"]["y"]
+                 and w["box"]["x"] + w["box"]["w"] <= cw
+                 and w["box"]["y"] + w["box"]["h"] <= ch_ for w in layout["widgets"])
+    check(inside, "all widget boxes inside the canvas")
+    z1 = [i for i in ids if i.startswith("z1_")]
+    check(len(z1) == 11, f"Z1 mixer widget set present ({len(z1)}/11: "
+                         f"filter/EQ/fader per channel + crossfader)")
+    check("fx1_drywet" in ids and "AB" in layout["theme"]["deck_colors"],
+          "referenced demo widget + AB deck color exist")
+    cfg = json.loads((ROOT / "midimat.config.json").read_text(encoding="utf-8"))
+    check(cfg.get("midi_ports") == ["X1 MK3", "Z1 MK2"],
+          f"config midi_ports covers both device families: {cfg.get('midi_ports')}")
+
     print("\nALL PASSED" if ok else "\nFAILURES")
     return 0 if ok else 1
 

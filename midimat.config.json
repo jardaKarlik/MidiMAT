@@ -1,7 +1,7 @@
 {
-  "midi_port": "X1 MK3",
+  "midi_ports": ["X1 MK3", "Z1 MK2"],
   "cc_map": "cc_map.json",
   "tsi": null,
   "_tsi_example": "C:\\Users\\jaros\\OneDrive\\Documents\\Native Instruments\\Traktor 4.5.1\\Traktor Settings.tsi",
-  "notes": "Set 'tsi' to a mapping export to add static CC->function semantics (works for Generic MIDI devices; X1 MK3 is native/HID in Traktor so its DDCB is empty - use cc_map)."
+  "_ports": "'X1 MK3' matches BOTH of your X1 units (two ports); 'Z1 MK2' is the mixer. Add \"F1\" to the list if you want the Kontrol F1 included. Set 'tsi' to a mapping export to add static CC->function semantics for Generic MIDI gear; the X1s/Z1 are native/HID in Traktor (empty DDCB) -> use cc_map."
 }

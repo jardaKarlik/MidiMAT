@@ -43,6 +43,21 @@ mapped-but-not-yet-calibrated control still tells the viewer what's happening.
   both units often map to different decks/FX), or omit `port` to match any unit.
 - Server/`--midi` uses the same rule — `msg.port` flows through the resolver.
 
+## Z1 MK2 mixer (added 2026-10-29)
+
+- Config now takes **`midi_ports: ["X1 MK3", "Z1 MK2"]`** — one list covers both X1
+  units (substring) *and* the Z1. Add `"F1"` for the Kontrol F1 also present on this
+  machine. `--midi-ports A B …` on the CLI overrides the list (`--midi` alone = config).
+- `layout.json` gained an **11-widget Z1 mixer set** placed in Traktor's center mixer
+  column (per `docs/TRAKTOR_UI.md`): per channel — `z1_fltr_*`, `z1_eq_hi/mid/lo_*`,
+  `z1_fader_*` (deck-colored A/blue, B/green) — plus `z1_xfade` (white, badge "AB").
+  FX placeholders moved to the real top FX row so the center column reads like Traktor.
+- Boxes are plausible dummies — **run `calibrate` to pin them to your actual GUI**
+  (the hover tool walks every widget in `layout.json`).
+- Like the X1s, the Z1 MK2 is native/HID in Traktor (its DEVI has empty DDCB) → learn
+  its CCs with `midi_tap watch --port X1 Z1` and add port-scoped `cc_map` entries
+  pointing at the `z1_*` widget ids (list is echoed in `cc_map.json:_z1_widgets_ready`).
+
 ## Bring-up checklist (acceptance for Phase 1)
 
 - [ ] `python -m sidecar.midi_tap list` → X1 ports visible

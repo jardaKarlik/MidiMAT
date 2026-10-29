@@ -95,10 +95,15 @@ class Resolver:
         return None
 
 
-def load_resolver(config_path: str | Path = "midimat.config.json") -> Resolver:
-    """Build a Resolver from midimat.config.json (missing file => empty resolver)."""
-    cfg: dict = {}
+def load_config(config_path: str | Path = "midimat.config.json") -> dict:
+    """Read midimat.config.json (missing file => {})."""
     p = Path(config_path)
     if p.exists():
-        cfg = json.loads(p.read_text(encoding="utf-8"))
+        return json.loads(p.read_text(encoding="utf-8"))
+    return {}
+
+
+def load_resolver(config_path: str | Path = "midimat.config.json") -> Resolver:
+    """Build a Resolver from midimat.config.json (missing file => empty resolver)."""
+    cfg = load_config(config_path)
     return Resolver(cc_map_path=cfg.get("cc_map"), tsi_path=cfg.get("tsi"))

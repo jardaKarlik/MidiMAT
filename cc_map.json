@@ -3,5 +3,6 @@
   "page_buttons": [],
   "entries": [],
   "_howto": "1) .venv\\Scripts\\python -m sidecar.midi_tap watch --port X1   2) move a control; the [port] prefix tells WHICH unit sent it (you own TWO X1 MK3s -> two ports)   3) add {\"port\": \"X1 MK3 2\", \"channel\": 0, \"kind\": \"cc\", \"number\": 21, \"label\": \"FX1 · Dry/Wet\", \"deck\": \"FX\", \"widget\": \"fx1_drywet\"}. 'port' is an optional substring: include it to scope an entry to ONE unit (recommended for identical controllers), omit it to match any unit. widget must match an id in layout.json (else HUD-only). Optional \"page\": \"fx\" scopes by X1 page; register switches in page_buttons.",
-  "_ports_note": "This machine shows: 'TRAKTOR X1 MK3 2' (unit 1) and '2 - TRAKTOR X1 MK3 3' (unit 2). Identify which physical unit is which by wiggling one knob while watch runs."
+  "_ports_note": "This machine shows: 'TRAKTOR X1 MK3 2' (X1 unit 1), '2 - TRAKTOR X1 MK3 3' (X1 unit 2), 'Traktor Z1 MK2 1' (mixer; also 'Traktor Kontrol F1 - 1 0'). Identify which physical unit is which by wiggling one control while watch runs.",
+  "_z1_widgets_ready": ["z1_fltr_a", "z1_eq_hi_a", "z1_eq_mid_a", "z1_eq_lo_a", "z1_fader_a", "z1_fltr_b", "z1_eq_hi_b", "z1_eq_mid_b", "z1_eq_lo_b", "z1_fader_b", "z1_xfade"]
 }

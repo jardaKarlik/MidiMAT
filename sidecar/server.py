@@ -32,7 +32,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from sidecar.midi_tap import MidiTap  # noqa: E402
-from sidecar.mapping import load_resolver  # noqa: E402
+from sidecar.mapping import Resolver, load_config  # noqa: E402
 
 log = logging.getLogger("midimat")
 
@@ -150,9 +150,11 @@ def main() -> None:
     parser.add_argument("--ws-port", type=int, default=8787)
     parser.add_argument("--no-demo", action="store_true",
                         help="disable the fake event generator (phase 1: real MIDI)")
-    parser.add_argument("--midi", nargs="?", const="", default=None, metavar="SUBSTR",
-                        help="listen to a MIDI port (substring match; omit value to use "
-                             "port_hint from midimat.config.json)")
+    parser.add_argument("--midi", action="store_true",
+                        help="enable MIDI input using midi_ports from midimat.config.json")
+    parser.add_argument("--midi-ports", nargs="+", default=None, metavar="SUBSTR",
+                        help="override config midi ports, e.g. --midi-ports 'X1 MK3' "
+                             "'Z1 MK2' (implies --midi)")
     parser.add_argument("--config", default=str(ROOT / "midimat.config.json"))
     args = parser.parse_args()
 
@@ -167,30 +169,35 @@ def main() -> None:
     log.info("widgets:  %d loaded from %s", len(LAYOUT["widgets"]), ROOT / "layout.json")
 
     tap = None
-    if args.midi is not None:
-        resolver = load_resolver(args.config)
-        port_substr = args.midi or resolver.port_hint or "X1"
+    if args.midi or args.midi_ports:
+        cfg = load_config(args.config)
+        resolver = Resolver(cc_map_path=cfg.get("cc_map"), tsi_path=cfg.get("tsi"))
+        port_hints = (args.midi_ports
+                      or cfg.get("midi_ports")
+                      or ([cfg["midi_port"]] if cfg.get("midi_port") else None)
+                      or [resolver.port_hint or "X1"])
 
         def on_midi(msg: dict) -> None:
             res = resolver.resolve(msg)
             if not res:
-                log.debug("unmapped: ch=%d %s #%d val=%d",
+                log.debug("unmapped: [%s] ch=%d %s #%d val=%d", msg.get("port"),
                           msg["channel"] + 1, msg["kind"], msg["number"], msg["value"])
                 return
             wid = res.get("widget") or (
-                f"key:{msg['channel']}.{msg['kind']}.{msg['number']}"
+                f"key:{msg.get('port', '')}.{msg['channel']}."
+                f"{msg['kind']}.{msg['number']}"
             )
             emit_midi(wid, msg["value"], res.get("label"), res.get("deck"))
 
-        tap = MidiTap(port_substr, on_midi,
+        tap = MidiTap(port_hints, on_midi,
                       on_status=lambda s: log.info("midi| %s", s))
         tap.start()
-        log.info("MIDI on port~%r  resolver: %d cc_map entries, %d tsi mappings",
-                 port_substr, len(resolver.entries), len(resolver.tsi_table))
+        log.info("MIDI on port hints %r  resolver: %d cc_map entries, %d tsi mappings",
+                 port_hints, len(resolver.entries), len(resolver.tsi_table))
         if not resolver.entries and not resolver.tsi_table:
             log.warning("empty resolver — nothing will glow; run "
-                        "`python -m sidecar.midi_tap watch --port %r` and fill cc_map.json",
-                        port_substr)
+                        "`python -m sidecar.midi_tap watch --port %s` and fill cc_map.json",
+                        " ".join(port_hints))
 
     try:
         asyncio.run(run_ws(args.ws_port, demo=not args.no_demo))

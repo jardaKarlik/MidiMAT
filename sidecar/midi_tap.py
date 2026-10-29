@@ -20,14 +20,20 @@ import time
 import mido
 
 
-def find_ports(substr: str) -> list[str]:
-    """All input ports matching a substring.
+def find_ports(hints) -> list[str]:
+    """All input ports matching ANY hint substring (str or list of str).
 
-    IMPORTANT: some users have MULTIPLE identical units (two X1 MK3s => two
-    ports that differ only in position/index). Never dedupe by model name —
-    every match is a real device."""
-    s = substr.lower()
-    return [p for p in mido.get_input_names() if s in p.lower()]
+    IMPORTANT: multi-device setups are the norm here — TWO X1 MK3s (two ports
+    differing only in index) plus a Z1 MK2 mixer, maybe an F1. Never dedupe by
+    model name; every match is a real device."""
+    if isinstance(hints, str):
+        hints = [hints]
+    names = mido.get_input_names()
+    out: list[str] = []
+    for h in hints:
+        hl = h.lower()
+        out.extend(p for p in names if hl in p.lower() and p not in out)
+    return out
 
 
 class MidiTap(threading.Thread):
@@ -36,9 +42,11 @@ class MidiTap(threading.Thread):
     callback(msg) receives dicts that always include 'port' — with two identical
     controllers, (port, channel, kind, number) is the real identity of a control."""
 
-    def __init__(self, port_substr: str, callback, on_status=None):
+    def __init__(self, port_hints, callback, on_status=None):
+        """port_hints: one substring or a list — ALL matching ports open
+        (e.g. ['X1 MK3', 'Z1 MK2'] covers two X1s + the Z1 mixer)."""
         super().__init__(daemon=True, name="midi-tap")
-        self.port_substr = port_substr
+        self.port_hints = [port_hints] if isinstance(port_hints, str) else list(port_hints)
         self.callback = callback
         self.on_status = on_status or (lambda s: None)
         self.open: dict[str, object] = {}
@@ -63,10 +71,10 @@ class MidiTap(threading.Thread):
 
     def run(self) -> None:
         while not self._stop.is_set():
-            names = find_ports(self.port_substr)
+            names = find_ports(self.port_hints)
             if not names:
                 self.on_status(
-                    f"no MIDI port matching {self.port_substr!r} "
+                    f"no MIDI port matching {self.port_hints!r} "
                     f"(available: {mido.get_input_names()}) — retrying"
                 )
             for name in names:
@@ -155,9 +163,9 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list", help="list MIDI ports")
     w = sub.add_parser("watch", help="print incoming MIDI messages (all matching ports)")
-    w.add_argument("--port", default="X1",
-                   help="port name substring; ALL matches are opened "
-                        "(default: X1 — matches every X1 unit)")
+    w.add_argument("--port", nargs="+", default=["X1"],
+                   help="port name substring(s); ALL matches are opened, "
+                        "e.g. --port X1 Z1 (default: X1)")
     w.add_argument("--record", help="append raw messages to JSONL file")
     w.add_argument("--seconds", type=float, default=None,
                    help="auto-stop after N seconds (default: run until Ctrl+C)")
