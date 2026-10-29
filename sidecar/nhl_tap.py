@@ -109,9 +109,13 @@ def cmd_dump(args: argparse.Namespace) -> int:
             out.write(json.dumps(rec) + "\n")
 
     print(f"capturing {len(handles)} interfaces for {args.seconds:.0f}s — "
-          f"turn knobs / press buttons / sweep strip on ALL units NOW!", flush=True)
-    deadline = time.time() + args.seconds
+          f"turn knobs NOW (X1 MK3: WAKE WITH A BUTTON PRESS, knobs alone don't wake it!)",
+          flush=True)
+    start = time.time()
+    deadline = start + args.seconds
     counts: dict[str, int] = {}
+    last_beat = start
+    last_refresh = start
     total = 0
     while time.time() < deadline:
         progressed = False
@@ -122,12 +126,43 @@ def cmd_dump(args: argparse.Namespace) -> int:
                 total += 1
                 serial = d["serial_number"]
                 counts[serial] = counts.get(serial, 0) + 1
+                last_event_at = time.time()
                 entry = {"t": round(time.time(), 4), "serial": serial,
                          "pid": d["product_id"], "len": len(rep),
                          "hex": bytes(rep).hex()}
-                print(f"  {entry['t']} [{serial}] len={len(rep):3d} {entry['hex']}")
+                print(f"  {entry['t']} [{serial}] len={len(rep):3d} {entry['hex']}",
+                      flush=True)
                 if out:
                     out.write(json.dumps(entry) + "\n")
+                    out.flush()  # a killed capture must never lose the buffer
+        now = time.time()
+        # X1 MK3 sleeps after idle: reopen handles periodically & when everything
+        # is stale, so a sleep/wake re-enumeration can't orphan us silently.
+        if now - last_refresh >= 20 and not progressed:
+            print(f"  [{now - start:5.0f}s] all silent "
+                  f"({total} reports) — refreshing handles", flush=True)
+            last_refresh = now
+            for _, dev in handles:
+                try:
+                    dev.close()
+                except Exception:  # noqa: BLE001
+                    pass
+            handles.clear()
+            for d in ni_devices():
+                if not is_vendor(d):
+                    continue
+                try:
+                    ndev = hid.device()
+                    ndev.open_path(d["path"])
+                    ndev.set_nonblocking(True)
+                    handles.append((d, ndev))
+                except Exception as e:  # noqa: BLE001
+                    print(f"reopen FAIL serial={d['serial_number']!r}: {e}", flush=True)
+        if now - last_beat >= 5:
+            print(f"  [{now - start:5.0f}s] listening… {total} reports "
+                  f"({', '.join(f'{s}:{c}' for s, c in counts.items()) or 'none'})",
+                  flush=True)
+            last_beat = now
         if not progressed:
             time.sleep(0.002)  # don't spin
 

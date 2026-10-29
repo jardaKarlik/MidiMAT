@@ -28,6 +28,12 @@
 4. X1 MK3 mode switch: default = native/NHL; MIDI mode = class-compliant MIDI endpoints
    (that's what `midi_tap` saw after the user switched). Both device interfaces stay
    enumerated in either mode; only one protocol streams.
+5. **⚠️ SLEEP/WAKE (learned the hard way, 2026-10-29):** the X1 MK3 idle-hibernates
+   after a few minutes — while asleep it sends NOTHING on NHL or MIDI, and **knob turns
+   do NOT wake it; a BUTTON PRESS does** (Z1 MK2 and F1 don't exhibit this). A 13-min
+   set capture came back empty because both X1s had napped before it started. Ops rule:
+   **press a button on every X1 before any capture/performance**, and the hardened
+   `dump` heartbeats + refreshes handles when everything goes stale.
 5. Community RE of the NHL family exists (MK2/MK1/Z1 — not MK3 yet):
    - `github.com/b0id/NI-X1MK2-Z1MK1-WebMIDI` — full HID→MIDI bridge; `X1DOCS.md`;
      30 buttons + shift layer, 8 × 12-bit FX knobs, encoders, touch strip, 51 LEDs,
