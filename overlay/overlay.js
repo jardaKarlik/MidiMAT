@@ -12,6 +12,7 @@ const qs = new URLSearchParams(location.search);
 const DEMO = qs.get("demo") === "1";
 const DEBUG = qs.get("debug") === "1";
 const SHOT = qs.get("shot"); // ?shot=<widget_id> — deterministic still-frame for visual QA
+const SHOT_LABEL = qs.get("shotlabel"); // ?shotlabel=Z1 · Test — HUD-only still (no widget)
 const WS_URL = "ws://127.0.0.1:8787";
 
 // Never die silently again: any JS error becomes a visible red-bordered pill.
@@ -288,6 +289,10 @@ function frame() {
       const w = widgetById.get(SHOT);
       drawGlow(w, 0.9, 100, now);
       hud = { id: SHOT, label: w.label, deck: w.deck, value: 100, last: now, first: now };
+      drawHud(now, true);
+    } else if (SHOT_LABEL) {
+      // HUD-only still: exactly the render path used by live NHL events
+      hud = { id: "shot", label: SHOT_LABEL, deck: "MIDI", value: 64, last: now, first: now };
       drawHud(now, true);
     } else {
       const ttl = layout.glow.ttl_ms;
