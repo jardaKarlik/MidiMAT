@@ -60,12 +60,28 @@ function sleep(ms) {
 function poke(id, value, label) {
   const s = state.get(id);
   if (!s) return;
-  // hysteresis: ignore ±1 jitter so the glow doesn't flicker on encoder noise
-  if (Math.abs(value - s.value) < 2 && value !== 0 && value !== 127) return;
-  s.value = value;
-  s.last = performance.now();
+  const now = performance.now();
+  // liveness ALWAYS refreshes — slow knob turns (±1 steps) must not blink the
+  // card/glow out mid-interaction; value gets hysteresis, activity never does.
+  s.last = now;
+  if (Math.abs(value - s.value) >= 2 || value === 0 || value === 127) {
+    s.value = value;
+  }
   const w = widgetById.get(id);
-  if (w) hud = { label: label || w.label, deck: w.deck, value, last: s.last };
+  if (!w) return;
+  const ttl = (layout && layout.hud && layout.hud.ttl_ms) || 1600;
+  // fade-in only on TRUE appearance: keep first-seen time while the interaction
+  // continues (same widget, events within ttl). Keying it off `last` caused the
+  // bottom-center card to re-fade on every value tick = blinking.
+  const continuing = hud && hud.id === id && now - hud.last <= ttl;
+  hud = {
+    id,
+    label: label || w.label,
+    deck: w.deck,
+    value: s.value,
+    last: now,
+    first: continuing ? hud.first : now,
+  };
 }
 
 function setStatus(text, isError = false) {
@@ -183,13 +199,12 @@ function drawGlow(widget, intensity, value, now) {
 function drawHud(now, force = false) {
   if (!hud || !layout.hud || !layout.hud.enabled) return;
   const cfg = layout.hud;
-  const age = now - hud.last;
-  if (!force && age > cfg.ttl_ms) return;
-
-  const fadeIn = Math.max(0, Math.min(1, age / 140));
-  const fadeOut =
-    age > cfg.ttl_ms - 400 ? Math.max(0, (cfg.ttl_ms - age) / 400) : 1;
-  const alpha = force ? 1 : Math.min(fadeIn, fadeOut);
+  // single fade timeline, unit-tested: fadeIn off APPEARANCE (hud.first),
+  // fadeOut off last event — refreshes never restart the fade (no blinking)
+  const alpha = force
+    ? 1
+    : MidiHudAlpha.hudAlpha(now, hud.last, hud.first ?? hud.last, cfg.ttl_ms);
+  if (alpha <= 0) return;
   const color = layout.theme.deck_colors[hud.deck] || "#33ccff";
   const w = cfg.width;
   const h = cfg.height;
@@ -269,7 +284,7 @@ function frame() {
       // deterministic still-frame for screenshots/QA: fixed value, no decay
       const w = widgetById.get(SHOT);
       drawGlow(w, 0.9, 100, now);
-      hud = { label: w.label, deck: w.deck, value: 100, last: now };
+      hud = { id: SHOT, label: w.label, deck: w.deck, value: 100, last: now, first: now };
       drawHud(now, true);
     } else {
       const ttl = layout.glow.ttl_ms;
