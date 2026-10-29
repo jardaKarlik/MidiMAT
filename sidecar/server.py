@@ -58,6 +58,7 @@ def emit_midi(widget_id: str, value: int, label: str | None = None,
         ev["label"] = label
     if deck:
         ev["deck"] = deck
+    _stats["midi_events"] = _stats.get("midi_events", 0) + 1
     emit(ev)
 
 
@@ -127,8 +128,10 @@ async def status_loop():
         now = time.monotonic()
         rate = _stats["sent"] / max(now - _stats["last_status"], 1e-6)
         log.info(
-            "status: %d overlay client(s), %d events total (%.1f/s)",
+            "status: %d overlay client(s), %d events total (%.1f/s), "
+            "%d midi/nhl events emitted",
             len(_clients), _stats["sent"], rate,
+            _stats.get("midi_events", 0),
         )
         _stats["last_status"] = now
 
@@ -215,6 +218,7 @@ def main() -> None:
                 emit_midi(wid, e["value"],
                           f"{device_nick(raw['pid'], raw['serial'])} · {e['name']}",
                           None)
+                log.info("nhl event: %s %s val=%d", raw["serial"], e["name"], e["value"])
 
         nhl = NhlTap(on_nhl, on_status=lambda s: log.info("nhl| %s", s))
         nhl.start()

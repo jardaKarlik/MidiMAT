@@ -19,3 +19,14 @@ Traceback (most recent call last):
     if path not in wanted:
        ^^^^^^^^^^^^^^^^^^
 TypeError: cannot use 'dict' as a dict key (unhashable type: 'dict')
+11:12:11.227 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:12:41.238 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:13:11.253 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:13:41.256 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:14:11.258 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:14:41.274 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:15:11.290 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:15:41.300 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:16:11.317 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:16:41.331 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)
+11:17:11.332 INFO    midimat | status: 0 overlay client(s), 0 events total (0.0/s)

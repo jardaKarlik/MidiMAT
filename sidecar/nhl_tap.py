@@ -249,13 +249,13 @@ class NhlTap(threading.Thread):
 
     def _refresh(self) -> None:
         wanted = {d["path"]: d for d in ni_devices() if is_vendor(d)}
-        for path, dev in list(self.handles):
-            if path not in wanted:
+        for d, dev in list(self.handles):  # handles store (device_dict, handle)
+            if d["path"] not in wanted:
                 try:
                     dev.close()
                 except Exception:  # noqa: BLE001
                     pass
-                self.handles = [h for h in self.handles if h[0]["path"] != path]
+                self.handles = [h for h in self.handles if h[0]["path"] != d["path"]]
         for path, d in wanted.items():
             if any(h[0]["path"] == path for h in self.handles):
                 continue
@@ -272,34 +272,48 @@ class NhlTap(threading.Thread):
     def run(self) -> None:
         last_refresh = 0.0
         last_activity = time.time()
+        reports_total = 0
+        last_alive = time.time()
         while not self._stop.is_set():
-            now = time.time()
-            if now - last_refresh >= 3 or not self.handles:
-                self._refresh()
-                last_refresh = now
-            activity = False
-            for d, dev in self.handles:
-                try:
-                    rep = dev.read(256)
-                except Exception:  # noqa: BLE001
-                    rep = []
-                if rep:
-                    activity = True
-                    self.callback({"serial": d["serial_number"],
-                                   "pid": d["product_id"], "data": list(rep)})
-            if activity:
-                last_activity = time.time()
-            elif now - last_activity >= 15:  # everyone silent -> force reopen
-                for _, dev in self.handles:
+            try:
+                now = time.time()
+                if now - last_refresh >= 3 or not self.handles:
+                    self._refresh()
+                    last_refresh = now
+                activity = False
+                for d, dev in self.handles:
                     try:
-                        dev.close()
+                        rep = dev.read(256)
                     except Exception:  # noqa: BLE001
-                        pass
-                self.handles.clear()
-                last_activity = now
-                self.on_status("nhl: all silent >15s — reopening handles")
-            else:
+                        rep = []
+                    if rep:
+                        activity = True
+                        reports_total += 1
+                        self.callback({"serial": d["serial_number"],
+                                       "pid": d["product_id"], "data": list(rep)})
+                if activity:
+                    last_activity = time.time()
+                elif now - last_activity >= 15:  # everyone silent -> force reopen
+                    for _, dev in self.handles:
+                        try:
+                            dev.close()
+                        except Exception:  # noqa: BLE001
+                            pass
+                    self.handles.clear()
+                    last_activity = now
+                    self.on_status("all silent >15s — reopening handles")
+                if now - last_alive >= 15:  # alive-proof heartbeat (silence is loud)
+                    self.on_status(
+                        f"tap alive: {len(self.handles)} handles open, "
+                        f"{reports_total} reports total"
+                        + ("" if reports_total else
+                           " — devices asleep? press a button, then TURN A KNOB")
+                    )
+                    last_alive = now
                 time.sleep(0.002)
+            except Exception as e:  # noqa: BLE001 — never die silently
+                self.on_status(f"tap loop error (restarting): {e!r}")
+                time.sleep(1)
 
     def stop(self) -> None:
         self._stop.set()
