@@ -31,6 +31,18 @@
 Overlay: now supports **HUD-only events** (description card without a glow box) so a
 mapped-but-not-yet-calibrated control still tells the viewer what's happening.
 
+## Two X1 MK3 units (user owns TWO — identity matters!)
+
+- Two physical units ⇒ two MIDI ports: `TRAKTOR X1 MK3 2` and `2 - TRAKTOR X1 MK3 3`
+  (and two `Traktor.Kontrol X1MK3` DEVI entries in `Traktor Settings.tsi` — same thing
+  from the Traktor side). **Never dedupe by model name.**
+- `midi_tap watch` opens **ALL** matching ports and prefixes every message with its
+  `[port]` — wiggle a knob on one unit to learn which port it is.
+- Control identity = **(port, channel, kind, number)**. In `cc_map.json`, give an entry
+  an optional `"port"` substring to scope it to one unit (recommended: the same knobs on
+  both units often map to different decks/FX), or omit `port` to match any unit.
+- Server/`--midi` uses the same rule — `msg.port` flows through the resolver.
+
 ## Bring-up checklist (acceptance for Phase 1)
 
 - [ ] `python -m sidecar.midi_tap list` → X1 ports visible

@@ -61,6 +61,11 @@ class Resolver:
 
     @staticmethod
     def _matches(msg: dict, spec: dict) -> bool:
+        # optional "port": substring of the MIDI port name — with two identical
+        # units (two X1 MK3s) port + channel + kind + number is the real identity
+        port_spec = spec.get("port")
+        if port_spec and port_spec.lower() not in (msg.get("port") or "").lower():
+            return False
         return (msg.get("channel") == spec.get("channel")
                 and msg.get("kind") == spec.get("kind")
                 and msg.get("number") == spec.get("number"))

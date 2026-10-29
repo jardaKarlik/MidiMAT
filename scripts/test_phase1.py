@@ -99,6 +99,38 @@ def main() -> int:
           "unknown key resolves to None")
     Path(cc_map).unlink()
 
+    # --- two identical units (two X1 MK3s): port disambiguates --------------
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
+                                     encoding="utf-8") as f:
+        json.dump({
+            "port_hint": "X1 MK3",
+            "page_buttons": [],
+            "entries": [
+                {"port": "X1 MK3 2", "channel": 0, "kind": "cc", "number": 21,
+                 "label": "Unit 1 · Filter", "deck": "A", "widget": "deck_a_filter"},
+                {"port": "2 - TRAKTOR", "channel": 0, "kind": "cc", "number": 21,
+                 "label": "Unit 2 · Filter", "deck": "B", "widget": None},
+                {"channel": 0, "kind": "cc", "number": 60,
+                 "label": "Any unit · shared", "deck": None, "widget": None},
+            ],
+        }, f)
+        dual = f.name
+
+    r3 = Resolver(cc_map_path=dual)
+    a = r3.resolve({"channel": 0, "kind": "cc", "number": 21, "value": 10,
+                    "port": "TRAKTOR X1 MK3 2"})
+    b = r3.resolve({"channel": 0, "kind": "cc", "number": 21, "value": 10,
+                    "port": "2 - TRAKTOR X1 MK3 3"})
+    check(a and a["label"] == "Unit 1 · Filter", "port scope: unit 1 entry wins on its port")
+    check(b and b["label"] == "Unit 2 · Filter", "port scope: unit 2 entry wins on its port")
+    c = r3.resolve({"channel": 0, "kind": "cc", "number": 60, "value": 10,
+                    "port": "2 - TRAKTOR X1 MK3 3"})
+    check(c and c["label"] == "Any unit · shared", "portless entry matches any unit")
+    d = r3.resolve({"channel": 0, "kind": "cc", "number": 21, "value": 10,
+                    "port": "Rane FOUR Control 4"})
+    check(d is None, "port-scoped entries ignore other ports' identical keys")
+    Path(dual).unlink()
+
     print("\nALL PASSED" if ok else "\nFAILURES")
     return 0 if ok else 1
 
