@@ -16,6 +16,13 @@ const SHOT_LABEL = qs.get("shotlabel"); // ?shotlabel=Z1 · Test — HUD-only st
 const WS_URL = "ws://127.0.0.1:8787";
 // ?glow=2.5 overrides layout.glow.strength live in OBS (1 = subtle, 2 = default, 3+ = club)
 const GLOW_PARAM = parseFloat(qs.get("glow"));
+// ?bg=<image url> — preview only: show a Traktor screenshot UNDER the overlay
+// (never use in OBS; there the real capture is underneath)
+const BG = qs.get("bg");
+if (BG) {
+  document.documentElement.style.background =
+    `#000 url("${BG.replace(/"/g, "")}") center / 100% 100% no-repeat`;
+}
 
 // Never die silently again: any JS error becomes a visible red-bordered pill.
 window.addEventListener("error", (e) =>
