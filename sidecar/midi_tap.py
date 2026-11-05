@@ -42,10 +42,13 @@ class MidiTap(threading.Thread):
     callback(msg) receives dicts that always include 'port' — with two identical
     controllers, (port, channel, kind, number) is the real identity of a control."""
 
-    def __init__(self, port_hints, callback, on_status=None):
+    def __init__(self, port_hints, callback, on_status=None, on_raw=None):
         """port_hints: one substring or a list — ALL matching ports open
-        (e.g. ['X1 MK3', 'Z1 MK2'] covers two X1s + the Z1 mixer)."""
+        (e.g. ['X1 MK3', 'Z1 MK2'] covers two X1s + the Z1 mixer).
+        on_raw(port, mido_msg): optional, sees EVERY message (incl. pitchwheel,
+        sysex, clock…) before the cc/note filter — for diagnosing silent ports."""
         super().__init__(daemon=True, name="midi-tap")
+        self.on_raw = on_raw
         self.port_hints = [port_hints] if isinstance(port_hints, str) else list(port_hints)
         self.callback = callback
         self.on_status = on_status or (lambda s: None)
@@ -54,12 +57,29 @@ class MidiTap(threading.Thread):
 
     def _cb(self, port_name: str):
         def handler(msg) -> None:
+            try:
+                _handle(msg)
+            except Exception as e:  # noqa: BLE001 — rtmidi threads die silently
+                self.on_status(f"callback error on {port_name!r} for {msg}: {e!r}")
+
+        def _handle(msg) -> None:
+            if self.on_raw:
+                self.on_raw(port_name, msg)
             if msg.type in ("control_change", "note_on", "note_off"):
+                is_cc = msg.type == "control_change"
+                # NB: never getattr(msg, "control", msg.note) — the default is
+                # evaluated eagerly and CC messages have no .note -> every CC
+                # raised inside the rtmidi callback thread and vanished silently.
+                if is_cc:
+                    number, value = msg.control, msg.value
+                else:
+                    number = msg.note
+                    value = msg.velocity if msg.type == "note_on" else 0
                 self.callback({
-                    "kind": "cc" if msg.type == "control_change" else "note",
+                    "kind": "cc" if is_cc else "note",
                     "channel": msg.channel,
-                    "number": getattr(msg, "control", msg.note),
-                    "value": getattr(msg, "value", 127 if msg.type == "note_on" else 0),
+                    "number": number,
+                    "value": value,
                     "ts": time.time(),
                     "port": port_name,
                 })
@@ -129,8 +149,18 @@ def cmd_watch(args: argparse.Namespace) -> int:
             rec.write(json.dumps(m) + "\n")
             rec.flush()
 
+    raw_count = [0]
+
+    def raw(port: str, msg) -> None:
+        raw_count[0] += 1
+        if args.raw or msg.type not in ("control_change", "note_on", "note_off"):
+            # non cc/note types are otherwise dropped silently — always show them
+            print(f"[{port}] RAW {msg}", flush=True)
+
     tap = MidiTap(args.port, handle,
-                  on_status=lambda s: print(f"[midi] {s}", flush=True))
+                  on_status=lambda s: print(f"[midi] {s}", flush=True),
+                  on_raw=raw)
+    print("MIDI inputs visible: " + ", ".join(mido.get_input_names()), flush=True)
     tap.start()
     print(f"watching ALL ports ~{args.port!r} — move controls now "
           f"({'%.0fs' % args.seconds if args.seconds else 'Ctrl+C'} to stop)",
@@ -149,7 +179,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
         if rec:
             rec.close()
         print(f"\nports opened: {len(opened)} ({', '.join(opened) or '-'})"
-              f"  unique keys seen: {len(seen)}")
+              f"  unique keys seen: {len(seen)}  raw messages: {raw_count[0]}")
         for (port, ch, kind, num), cnt in sorted(seen.items()):
             print(f"  [{port}] ch={ch + 1:02d} {kind:4s} #{num:3d}  x{cnt}")
         if not seen:
@@ -167,6 +197,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="port name substring(s); ALL matches are opened, "
                         "e.g. --port X1 Z1 (default: X1)")
     w.add_argument("--record", help="append raw messages to JSONL file")
+    w.add_argument("--raw", action="store_true",
+                   help="print every incoming message verbatim (diagnostics)")
     w.add_argument("--seconds", type=float, default=None,
                    help="auto-stop after N seconds (default: run until Ctrl+C)")
     args = parser.parse_args(argv)
