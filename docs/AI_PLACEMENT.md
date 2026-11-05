@@ -26,6 +26,24 @@ Model: `MIDIMAT_VLM_MODEL` (default `qwen/qwen2.5-vl-72b-instruct`; try
   geometry against the existing layout (free, offline); vision model only for brand-new
   layouts, on cropped regions with few tags.
 
+## First trained detector (2026-11-05)
+
+yolo11n, 17 screenshots, 150 epochs, CPU (Ryzen 5 4500) 52 min. Validation P 0.985 / R 0.593.
+On an **unseen** screenshot (`eval_suggest.py`, conf 0.10):
+
+| | OpenCV | YOLO |
+|---|---|---|
+| centre-hit recall | ~14 % | **96 % (85/89)** |
+| median centre error | ~10 px | **1.0 px** |
+| candidates | 850–970 | **85** |
+
+Misses: FX ON buttons classified as *knob* (fx1/2/4_on), deck_a_sync. Fix: training-only
+boxes for unmapped look-alikes + more FX-on examples. Inference runs on CPU (~0.1 s);
+GTX 10xx (sm_61) is unsupported by cu128 torch builds (cu126 still supports it).
+
+Next: **auto re-fit** — detect, estimate global scale/offset against the known layout,
+snap every box (window moved/resized) — no vision model needed for a known layout.
+
 ## Use it
 
 ```powershell
