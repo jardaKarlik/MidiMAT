@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MidiMAT Placer</title>
+<style>
+  :root { --bg:#14161a; --panel:#1d2026; --line:#2c3038; --text:#e7e9ee; --dim:#8b92a1;
+          --acc:#33ccff; --ok:#3dff9e; --warn:#ffcc33; --bad:#ff6b6b; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
+               font:13px/1.4 "Segoe UI", system-ui, sans-serif; }
+  #app { display:grid; grid-template-columns: 300px 1fr; height:100%; }
+  aside { background:var(--panel); border-right:1px solid var(--line); display:flex;
+          flex-direction:column; min-height:0; }
+  aside header { padding:12px; border-bottom:1px solid var(--line); }
+  h1 { font-size:15px; margin:0 0 8px; }
+  input[type=search] { width:100%; padding:6px 8px; background:#111317; color:var(--text);
+                       border:1px solid var(--line); border-radius:6px; }
+  .row { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  button { background:#2a2f38; color:var(--text); border:1px solid var(--line);
+           border-radius:6px; padding:5px 10px; cursor:pointer; font:inherit; }
+  button:hover { border-color:var(--acc); }
+  button.primary { background:#1b4f63; border-color:var(--acc); }
+  #list { overflow:auto; flex:1; padding:4px 0; }
+  .grp { padding:8px 12px 4px; color:var(--dim); font-size:11px; text-transform:uppercase;
+         letter-spacing:.06em; }
+  .item { padding:5px 12px; cursor:pointer; border-left:3px solid transparent; }
+  .item:hover { background:#252931; }
+  .item.sel { background:#22313a; border-left-color:var(--acc); }
+  .item .id { font-weight:600; }
+  .item .sub { color:var(--dim); font-size:11px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  main { position:relative; overflow:hidden; display:flex; align-items:center;
+         justify-content:center; background:#0b0c0e; }
+  #stage { max-width:100%; max-height:100%; background:#000; cursor:crosshair;
+           box-shadow:0 0 0 1px var(--line); }
+  #help { position:absolute; left:12px; bottom:10px; color:var(--dim); font-size:12px;
+          background:rgba(0,0,0,.6); padding:6px 10px; border-radius:6px; max-width:70%; }
+  #loupe { position:absolute; right:12px; top:12px; width:220px; height:220px;
+           border:1px solid var(--line); border-radius:8px; background:#000; }
+  #msg { margin-top:8px; min-height:18px; color:var(--dim); white-space:pre-wrap; }
+  #msg.ok { color:var(--ok); } #msg.bad { color:var(--bad); }
+  #drop { position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+          font-size:20px; background:rgba(51,204,255,.15); border:3px dashed var(--acc); }
+  kbd { background:#2a2f38; border:1px solid var(--line); border-radius:4px; padding:0 4px;
+        font-size:11px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <header>
+      <h1>MidiMAT placer</h1>
+      <input id="filter" type="search" placeholder="filter (id, label, deck…)" />
+      <div class="row">
+        <button id="pick">Load screenshot…</button>
+        <button id="save" class="primary">Save (Ctrl+S)</button>
+      </div>
+      <div class="row">
+        <button id="nextBtn" title="N">Next unplaced</button>
+        <button id="allBtn" title="Ctrl+A">Select all placed</button>
+      </div>
+      <div id="msg"></div>
+    </header>
+    <div id="list"></div>
+  </aside>
+  <main>
+    <canvas id="stage"></canvas>
+    <canvas id="loupe" width="220" height="220"></canvas>
+    <div id="help">
+      <b>Screenshot first:</b> OBS → right-click the Traktor capture source → <i>Screenshot (Source)</i>,
+      then <kbd>Ctrl+V</kbd> / drop it here.
+      Pick a control on the left, <b>drag</b> a box over it. Drag a box to move, corner to resize.
+      <kbd>←↑→↓</kbd> nudge (<kbd>Shift</kbd> ×10) · <kbd>Ctrl+A</kbd> + arrows = shift ALL ·
+      <kbd>C</kbd> circle/rect · <kbd>Del</kbd> clear · <kbd>N</kbd> next unplaced
+    </div>
+    <div id="drop">drop screenshot</div>
+  </main>
+</div>
+<input id="file" type="file" accept="image/*" hidden />
+<script>
+"use strict";
+const COLORS = { A:"#33ccff", B:"#3dff9e", C:"#c084fc", D:"#ff8a65", FX:"#ffcc33", AB:"#ffffff" };
+const stage = document.getElementById("stage"), ctx = stage.getContext("2d");
+const loupe = document.getElementById("loupe"), lctx = loupe.getContext("2d");
+const listEl = document.getElementById("list"), msgEl = document.getElementById("msg");
+let rows = [], byId = new Map(), sel = new Set(), bg = null, dirty = false;
+let drag = null, mouse = null;
+
+function say(text, cls = "") { msgEl.textContent = text; msgEl.className = cls; }
+function hasBox(r) { return ["x","y","w","h"].every(k => r[k] !== "" && r[k] != null); }
+function box(r) { return { x:+r.x, y:+r.y, w:+r.w, h:+r.h }; }
+function setBox(r, b) {
+  r.x = Math.round(b.x); r.y = Math.round(b.y);
+  r.w = Math.max(4, Math.round(b.w)); r.h = Math.max(4, Math.round(b.h));
+  if (r.shape === "circle") r.w = r.h = Math.max(r.w, r.h);
+  dirty = true;
+}
+
+async function load() {
+  try {
+    const res = await fetch("/api/controls", { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    stage.width = data.canvas.width; stage.height = data.canvas.height;
+    rows = data.rows; byId = new Map(rows.map(r => [r.id, r]));
+    say(`${rows.length} controls · canvas ${stage.width}×${stage.height}`);
+  } catch (e) {
+    say("Cannot reach the sidecar API — start it with scripts\\run.ps1 and open\n" +
+        "http://127.0.0.1:8080/overlay/edit.html", "bad");
+    stage.width = 1920; stage.height = 1080;
+  }
+  try {
+    const saved = localStorage.getItem("midimat_bg");
+    if (saved) setBg(saved, false);
+  } catch {}
+  renderList(); draw();
+}
+
+function setBg(src, remember = true) {
+  const img = new Image();
+  img.onload = () => {
+    bg = img;
+    if (Math.abs(img.width / img.height - stage.width / stage.height) > 0.01)
+      say(`Screenshot ${img.width}×${img.height} has a different aspect than the canvas ` +
+          `${stage.width}×${stage.height} — it is stretched to fit, exactly like OBS does ` +
+          `when both sources share one bounding box.`, "bad");
+    if (remember) try { localStorage.setItem("midimat_bg", src); } catch {}
+    draw();
+  };
+  img.src = src;
+}
+function readFile(f) {
+  if (!f || !f.type.startsWith("image/")) return;
+  const fr = new FileReader(); fr.onload = () => setBg(fr.result); fr.readAsDataURL(f);
+}
+
+function renderList() {
+  const q = document.getElementById("filter").value.toLowerCase();
+  const match = r => !q || [r.id, r.label, r.deck, r.physical, r.traktor_out]
+      .join(" ").toLowerCase().includes(q);
+  const groups = [["Unplaced", rows.filter(r => !hasBox(r) && match(r))],
+                  ["Placed", rows.filter(r => hasBox(r) && match(r))]];
+  listEl.innerHTML = "";
+  for (const [name, items] of groups) {
+    const g = document.createElement("div");
+    g.className = "grp"; g.textContent = `${name} (${items.length})`; listEl.append(g);
+    for (const r of items) {
+      const d = document.createElement("div");
+      d.className = "item" + (sel.has(r.id) ? " sel" : "");
+      d.innerHTML = `<div class="id"><span class="dot" style="background:${COLORS[r.deck] || "#888"}"></span>${r.id}</div>` +
+                    `<div class="sub">${r.deck ? "Deck/Grp " + r.deck + " · " : ""}${r.label}</div>` +
+                    `<div class="sub">${r.physical || ""}</div>`;
+      d.onclick = (e) => { select(r.id, e.shiftKey); };
+      listEl.append(d);
+    }
+  }
+}
+
+function select(id, add = false) {
+  if (!add) sel.clear();
+  if (sel.has(id) && add) sel.delete(id); else sel.add(id);
+  renderList(); draw();
+}
+function single() { return sel.size === 1 ? byId.get([...sel][0]) : null; }
+
+function toCanvas(e) {
+  const r = stage.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * stage.width,
+           y: (e.clientY - r.top) / r.height * stage.height };
+}
+function hit(p) {
+  const placed = rows.filter(hasBox);
+  for (let i = placed.length - 1; i >= 0; i--) {
+    const r = placed[i], b = box(r), hs = 10;
+    if (Math.abs(p.x - (b.x + b.w)) < hs && Math.abs(p.y - (b.y + b.h)) < hs)
+      return { r, mode: "resize" };
+    if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h)
+      return { r, mode: "move" };
+  }
+  return null;
+}
+
+stage.addEventListener("mousedown", (e) => {
+  const p = toCanvas(e), h = hit(p);
+  if (h) {
+    if (!sel.has(h.r.id)) select(h.r.id, e.shiftKey);
+    drag = { mode: h.mode, start: p, orig: new Map([...sel].map(id => [id, box(byId.get(id))])) };
+  } else if (single()) {
+    drag = { mode: "draw", start: p, r: single() };
+  } else {
+    say("Pick a control in the list first, then drag a box over it.");
+  }
+});
+window.addEventListener("mousemove", (e) => {
+  mouse = toCanvas(e);
+  if (drag) {
+    const dx = mouse.x - drag.start.x, dy = mouse.y - drag.start.y;
+    if (drag.mode === "draw") {
+      setBox(drag.r, { x: Math.min(drag.start.x, mouse.x), y: Math.min(drag.start.y, mouse.y),
+                       w: Math.abs(dx), h: Math.abs(dy) });
+    } else if (drag.mode === "move") {
+      for (const [id, b] of drag.orig) setBox(byId.get(id), { ...b, x: b.x + dx, y: b.y + dy });
+    } else if (drag.mode === "resize") {
+      const [id, b] = [...drag.orig][0];
+      setBox(byId.get(id), { ...b, w: b.w + dx, h: b.h + dy });
+    }
+  }
+  draw();
+});
+window.addEventListener("mouseup", () => {
+  if (drag && drag.mode === "draw") {
+    const r = drag.r;
+    if (+r.w < 8 && +r.h < 8) { r.x = r.y = r.w = r.h = ""; }  // a click, not a box
+    renderList();
+  }
+  drag = null;
+});
+
+window.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const k = e.key;
+  if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === "s") { e.preventDefault(); save(); return; }
+  if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === "a") { e.preventDefault(); selectAll(); return; }
+  const step = e.shiftKey ? 10 : 1;
+  const mv = { ArrowLeft:[-step,0], ArrowRight:[step,0], ArrowUp:[0,-step], ArrowDown:[0,step] }[k];
+  if (mv && sel.size) {
+    e.preventDefault();
+    for (const id of sel) { const r = byId.get(id); if (hasBox(r)) {
+      const b = box(r); setBox(r, { ...b, x: b.x + mv[0], y: b.y + mv[1] }); } }
+    draw(); return;
+  }
+  if ((k === "Delete" || k === "Backspace") && sel.size) {
+    for (const id of sel) { const r = byId.get(id); r.x = r.y = r.w = r.h = ""; }
+    dirty = true; renderList(); draw(); return;
+  }
+  if (k.toLowerCase() === "c" && single()) {
+    const r = single(); r.shape = r.shape === "circle" ? "rect" : "circle";
+    if (hasBox(r)) setBox(r, box(r)); dirty = true; draw(); return;
+  }
+  if (k.toLowerCase() === "n") nextUnplaced();
+});
+
+function selectAll() { sel = new Set(rows.filter(hasBox).map(r => r.id)); renderList(); draw();
+  say(`${sel.size} boxes selected — arrows shift them all`); }
+function nextUnplaced() {
+  const cur = single(), un = rows.filter(r => !hasBox(r));
+  if (!un.length) { say("everything is placed 🎉", "ok"); return; }
+  const i = cur ? un.findIndex(r => r.id === cur.id) : -1;
+  select(un[(i + 1) % un.length].id);
+  listEl.querySelector(".item.sel")?.scrollIntoView({ block: "center" });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, stage.width, stage.height);
+  if (bg) ctx.drawImage(bg, 0, 0, stage.width, stage.height);
+  else { ctx.fillStyle = "#1a1d22"; ctx.fillRect(0, 0, stage.width, stage.height);
+         ctx.fillStyle = "#8b92a1"; ctx.font = "32px Segoe UI, sans-serif"; ctx.textAlign = "center";
+         ctx.fillText("Paste (Ctrl+V) or drop a Traktor screenshot", stage.width / 2, stage.height / 2);
+         ctx.textAlign = "start"; }
+  for (const r of rows) {
+    if (!hasBox(r)) continue;
+    const b = box(r), s = sel.has(r.id), col = COLORS[r.deck] || "#ccc";
+    ctx.lineWidth = s ? 3 : 1.5; ctx.strokeStyle = col; ctx.globalAlpha = s ? 1 : 0.75;
+    ctx.beginPath();
+    if (r.shape === "circle") ctx.ellipse(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, b.h / 2, 0, 0, 7);
+    else ctx.rect(b.x, b.y, b.w, b.h);
+    ctx.stroke();
+    if (s) { ctx.fillStyle = col; ctx.fillRect(b.x + b.w - 5, b.y + b.h - 5, 10, 10);
+             ctx.font = "bold 14px Segoe UI, sans-serif";
+             const t = r.id, tw = ctx.measureText(t).width;
+             ctx.fillStyle = "rgba(0,0,0,.75)"; ctx.fillRect(b.x, b.y - 20, tw + 8, 18);
+             ctx.fillStyle = col; ctx.fillText(t, b.x + 4, b.y - 6); }
+    ctx.globalAlpha = 1;
+  }
+  drawLoupe();
+}
+function drawLoupe() {
+  lctx.fillStyle = "#000"; lctx.fillRect(0, 0, 220, 220);
+  if (!mouse) return;
+  const z = 4, src = 220 / z;
+  lctx.imageSmoothingEnabled = false;
+  lctx.drawImage(stage, mouse.x - src / 2, mouse.y - src / 2, src, src, 0, 0, 220, 220);
+  lctx.strokeStyle = "#ff3b3b"; lctx.lineWidth = 1;
+  lctx.beginPath(); lctx.moveTo(110, 0); lctx.lineTo(110, 220); lctx.moveTo(0, 110);
+  lctx.lineTo(220, 110); lctx.stroke();
+  lctx.fillStyle = "#fff"; lctx.font = "12px Segoe UI, sans-serif";
+  lctx.fillText(`${Math.round(mouse.x)}, ${Math.round(mouse.y)}`, 6, 214);
+}
+
+async function save() {
+  say("saving…");
+  try {
+    const payload = { rows: rows.map(r => ({ id: r.id, x: r.x, y: r.y, w: r.w, h: r.h, shape: r.shape })) };
+    const res = await fetch("/api/controls", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const out = await res.json();
+    if (!res.ok) throw new Error(out.error || res.status);
+    dirty = false;
+    say(`saved · ${out.widgets} glowing widgets · ${out.unplaced.length} unplaced\n` +
+        `overlay updated live (no OBS refresh needed)`, "ok");
+  } catch (e) { say("save failed: " + e.message, "bad"); }
+}
+
+document.getElementById("filter").oninput = renderList;
+document.getElementById("save").onclick = save;
+document.getElementById("nextBtn").onclick = nextUnplaced;
+document.getElementById("allBtn").onclick = selectAll;
+document.getElementById("pick").onclick = () => document.getElementById("file").click();
+document.getElementById("file").onchange = (e) => readFile(e.target.files[0]);
+window.addEventListener("paste", (e) => {
+  for (const it of e.clipboardData.items) if (it.type.startsWith("image/")) readFile(it.getAsFile());
+});
+const dropEl = document.getElementById("drop");
+window.addEventListener("dragover", (e) => { e.preventDefault(); dropEl.style.display = "flex"; });
+window.addEventListener("dragleave", (e) => { if (!e.relatedTarget) dropEl.style.display = "none"; });
+window.addEventListener("drop", (e) => { e.preventDefault(); dropEl.style.display = "none";
+  readFile(e.dataTransfer.files[0]); });
+window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+load();
+</script>
+</body>
+</html>

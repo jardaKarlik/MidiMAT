@@ -69,9 +69,73 @@ def emit_midi(widget_id: str, value: int, label: str | None = None,
 
 
 # --- HTTP: static files from repo root (overlay + layout.json) -----------------
+def _csv_tools():
+    """Shared CSV helpers live in scripts/ (wizard + build_maps)."""
+    sp = str(ROOT / "scripts")
+    if sp not in sys.path:
+        sys.path.insert(0, sp)
+    import build_maps  # noqa: PLC0415
+    import setup_wizard  # noqa: PLC0415
+    return setup_wizard, build_maps
+
+
 class QuietStaticHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
+
+    def end_headers(self):  # editor/overlay must never see a stale layout.json
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
+    def _json(self, code: int, obj) -> None:
+        body = json.dumps(obj).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):  # noqa: N802
+        if self.path.split("?")[0] == "/api/controls":
+            wiz, _ = _csv_tools()
+            self._json(200, {"canvas": load_layout()["canvas"],
+                             "rows": list(wiz.load_rows().values())})
+            return
+        super().do_GET()
+
+    def do_POST(self):  # noqa: N802
+        """Editor save: {"rows": [{"id", "x", "y", "w", "h", "shape"?}, ...]}
+        -> merge boxes into mapping/controls.csv -> rebuild cc_map/layout ->
+        push the new layout to every connected overlay (live, no OBS refresh)."""
+        if self.path.split("?")[0] != "/api/controls":
+            self._json(404, {"error": "not found"})
+            return
+        try:
+            n = int(self.headers.get("Content-Length", 0))
+            payload = json.loads(self.rfile.read(n) or b"{}")
+            wiz, bm = _csv_tools()
+            rows = wiz.load_rows()
+            changed = 0
+            for upd in payload.get("rows", []):
+                r = rows.get(upd.get("id"))
+                if not r:
+                    continue
+                for k in ("x", "y", "w", "h"):
+                    if upd.get(k) is None or upd.get(k) == "":
+                        r[k] = ""
+                    else:
+                        r[k] = str(int(round(float(upd[k]))))
+                if upd.get("shape") in ("circle", "rect"):
+                    r["shape"] = upd["shape"]
+                changed += 1
+            wiz.save_rows(rows)
+            summary = bm.build(quiet=True)
+            emit({"type": "hello", "layout": load_layout()})
+            log.info("editor saved %d box(es); layout pushed to overlays", changed)
+            self._json(200, {"ok": True, "changed": changed, **summary})
+        except Exception as e:  # noqa: BLE001
+            log.exception("editor save failed")
+            self._json(500, {"error": repr(e)})
 
     def log_message(self, fmt, *args):  # route through logging, keep console tidy
         log.debug("http %s", fmt % args)
@@ -180,6 +244,7 @@ def main() -> None:
 
     start_http(args.http_port)
     log.info("overlay:  http://127.0.0.1:%d/overlay/index.html?debug=1", args.http_port)
+    log.info("editor:   http://127.0.0.1:%d/overlay/edit.html", args.http_port)
     log.info("widgets:  %d loaded from %s", len(LAYOUT["widgets"]), ROOT / "layout.json")
 
     tap = None
