@@ -12,6 +12,7 @@ Usage (Traktor running, Generic MIDI device with Out-Port = loopMIDI):
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile z1cd  # mixer, decks C/D
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile fx    # FX units 1-4 (X1s)
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile decks # play/cue/sync/loop A-D
+    .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile browser # browse/load
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile all --redo
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --list
 Then:  .\\.venv\\Scripts\\python.exe scripts\\build_maps.py
@@ -97,6 +98,32 @@ def _deck(d: str) -> list[tuple]:
     ]
 
 
+CMD_HINT = ("browser actions are commands, not values - Traktor may send NOTHING for "
+            "them. If the test stays silent, press s (the 'Deck is Loaded' rows still "
+            "catch track loads)")
+BROWSER = [
+    ("br_list_scroll", "X1 BROWSE encoder - turn (track list up/down)",
+     "Browser > List > Select Up/Down", "Global (no deck)", "Browse", "AB", "button",
+     CMD_HINT),
+    ("br_tree_scroll", "X1 BROWSE encoder - SHIFT+turn (folder tree up/down; skip if unused)",
+     "Browser > Tree > Select Up/Down", "Global (no deck)", "Browse Folders", "AB",
+     "button", CMD_HINT),
+    ("br_tree_expand", "X1 BROWSE encoder - push / SHIFT+push (open/close folder; skip if "
+     "unused)", "Browser > Tree > Select Expand/Collapse", "Global (no deck)",
+     "Open Folder", "AB", "button", CMD_HINT),
+    ("br_only_browser", "button that maximizes the browser (skip if unused)",
+     "Layout > Only Browser On", "Global (no deck)", "Browser View", "AB", "button", ""),
+] + [
+    (f"deck_{d.lower()}_load", f"LOAD button / encoder push for Deck {d}",
+     "Deck Common > Load Selected", f"Deck {d}", "Load Track", d, "button", CMD_HINT)
+    for d in "ABCD"
+] + [
+    (f"deck_{d.lower()}_loaded", f"load any track into Deck {d} (any way: X1, mouse...)",
+     "Deck Common > Deck is Loaded", f"Deck {d}", "Track Loaded", d, "button",
+     "Out-only signal: fires when a track lands on the deck - load 2 tracks in a row "
+     "(or unload + load) so the wizard sees a change")
+    for d in "ABCD"
+]
 MIXER_GLOBAL = [
     ("z1_xfade", "Z1 crossfader", "Mixer > X-Fader > Position", "Global (no deck)",
      "Crossfader", "AB", "knob", "Assignment may be greyed out - that's fine"),
@@ -133,9 +160,10 @@ PROFILES: dict[str, list[tuple]] = {
            + _fx_unit(3, "X1 FX section driving FX Unit 3")
            + _fx_unit(4, "X1 FX section driving FX Unit 4")),
     "decks": _deck("A") + _deck("B") + _deck("C") + _deck("D"),
+    "browser": BROWSER,
 }
 PROFILES["x1"] = PROFILES["fx"] + PROFILES["decks"]
-PROFILES["all"] = PROFILES["z1"] + PROFILES["z1cd"] + PROFILES["x1"]
+PROFILES["all"] = PROFILES["z1"] + PROFILES["z1cd"] + PROFILES["x1"] + BROWSER
 
 
 # --- csv -------------------------------------------------------------------------
