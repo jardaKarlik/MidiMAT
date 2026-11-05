@@ -1,0 +1,12 @@
+id,physical,traktor_out,channel,cc,label,deck,shape,x,y,w,h
+z1_eq_hi_a,Z1 HI left,Deck A > High Adjust,1,1,EQ High,A,circle,892,135,46,46
+z1_eq_mid_a,Z1 MID left,Deck A > Mid Adjust,1,,EQ Mid,A,circle,892,193,46,46
+z1_eq_lo_a,Z1 LO left,Deck A > Low Adjust,1,,EQ Low,A,circle,892,255,46,46
+z1_fltr_a,Z1 FILTER left,Deck A > Filter Adjust,1,,Filter,A,circle,837,217,46,46
+z1_fader_a,Z1 fader left,Deck A > Volume Adjust,1,,Volume,A,rect,875,300,24,150
+z1_eq_hi_b,Z1 HI right,Deck B > High Adjust,1,,EQ High,B,circle,957,135,46,46
+z1_eq_mid_b,Z1 MID right,Deck B > Mid Adjust,1,,EQ Mid,B,circle,957,193,46,46
+z1_eq_lo_b,Z1 LO right,Deck B > Low Adjust,1,,EQ Low,B,circle,957,255,46,46
+z1_fltr_b,Z1 FILTER right,Deck B > Filter Adjust,1,,Filter,B,circle,1029,217,46,46
+z1_fader_b,Z1 fader right,Deck B > Volume Adjust,1,,Volume,B,rect,1008,300,24,150
+z1_xfade,Z1 crossfader,Mixer > X-Fader Position,1,,Crossfader,AB,rect,847,573,220,26

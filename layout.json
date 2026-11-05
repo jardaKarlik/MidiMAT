@@ -37,80 +37,8 @@
   "_positions": "Vision-snapped 2026-10-29 from CLIENT-area PrintWindow capture (Traktor content 1920x988 at scene 0,0). Info band y>=989 reserved for HUD. Z1: EQ cols x=915/980 rows y=158/216/278, FLTR x=860/1052 y=240, faders x=887/1020 y=300-450, xfade y=586.",
   "widgets": [
     {
-      "id": "fx1_size",
-      "label": "FX1 \u00b7 Flanger Size",
-      "deck": "FX",
-      "shape": "circle",
-      "box": {
-        "x": 40,
-        "y": 1120,
-        "w": 40,
-        "h": 40
-      }
-    },
-    {
-      "id": "fx1_drywet",
-      "label": "FX1 \u00b7 Dry/Wet",
-      "deck": "FX",
-      "shape": "circle",
-      "box": {
-        "x": 40,
-        "y": 1120,
-        "w": 40,
-        "h": 40
-      }
-    },
-    {
-      "id": "deck_a_filter",
-      "label": "Deck A \u00b7 Filter",
-      "deck": "A",
-      "shape": "circle",
-      "box": {
-        "x": 40,
-        "y": 1120,
-        "w": 40,
-        "h": 40
-      }
-    },
-    {
-      "id": "deck_a_move",
-      "label": "Deck A \u00b7 Move",
-      "deck": "A",
-      "shape": "circle",
-      "box": {
-        "x": 40,
-        "y": 1120,
-        "w": 40,
-        "h": 40
-      }
-    },
-    {
-      "id": "master_gain",
-      "label": "Master \u00b7 Gain",
-      "deck": "AB",
-      "shape": "rect",
-      "box": {
-        "x": 40,
-        "y": 1120,
-        "w": 40,
-        "h": 40
-      }
-    },
-    {
-      "id": "z1_fltr_a",
-      "label": "Z1 \u00b7 Filter A",
-      "deck": "A",
-      "shape": "circle",
-      "box": {
-        "x": 837,
-        "y": 217,
-        "w": 46,
-        "h": 46
-      }
-    },
-    {
       "id": "z1_eq_hi_a",
-      "label": "Z1 \u00b7 EQ High A",
+      "label": "EQ High",
       "deck": "A",
       "shape": "circle",
       "box": {
@@ -122,7 +50,7 @@
     },
     {
       "id": "z1_eq_mid_a",
-      "label": "Z1 \u00b7 EQ Mid A",
+      "label": "EQ Mid",
       "deck": "A",
       "shape": "circle",
       "box": {
@@ -134,7 +62,7 @@
     },
     {
       "id": "z1_eq_lo_a",
-      "label": "Z1 \u00b7 EQ Low A",
+      "label": "EQ Low",
       "deck": "A",
       "shape": "circle",
       "box": {
@@ -145,8 +73,20 @@
       }
     },
     {
+      "id": "z1_fltr_a",
+      "label": "Filter",
+      "deck": "A",
+      "shape": "circle",
+      "box": {
+        "x": 837,
+        "y": 217,
+        "w": 46,
+        "h": 46
+      }
+    },
+    {
       "id": "z1_fader_a",
-      "label": "Z1 \u00b7 Channel Fader A",
+      "label": "Volume",
       "deck": "A",
       "shape": "rect",
       "box": {
@@ -157,20 +97,8 @@
       }
     },
     {
-      "id": "z1_fltr_b",
-      "label": "Z1 \u00b7 Filter B",
-      "deck": "B",
-      "shape": "circle",
-      "box": {
-        "x": 1029,
-        "y": 217,
-        "w": 46,
-        "h": 46
-      }
-    },
-    {
       "id": "z1_eq_hi_b",
-      "label": "Z1 \u00b7 EQ High B",
+      "label": "EQ High",
       "deck": "B",
       "shape": "circle",
       "box": {
@@ -182,7 +110,7 @@
     },
     {
       "id": "z1_eq_mid_b",
-      "label": "Z1 \u00b7 EQ Mid B",
+      "label": "EQ Mid",
       "deck": "B",
       "shape": "circle",
       "box": {
@@ -194,7 +122,7 @@
     },
     {
       "id": "z1_eq_lo_b",
-      "label": "Z1 \u00b7 EQ Low B",
+      "label": "EQ Low",
       "deck": "B",
       "shape": "circle",
       "box": {
@@ -205,8 +133,20 @@
       }
     },
     {
+      "id": "z1_fltr_b",
+      "label": "Filter",
+      "deck": "B",
+      "shape": "circle",
+      "box": {
+        "x": 1029,
+        "y": 217,
+        "w": 46,
+        "h": 46
+      }
+    },
+    {
       "id": "z1_fader_b",
-      "label": "Z1 \u00b7 Channel Fader B",
+      "label": "Volume",
       "deck": "B",
       "shape": "rect",
       "box": {
@@ -218,7 +158,7 @@
     },
     {
       "id": "z1_xfade",
-      "label": "Z1 \u00b7 Crossfader",
+      "label": "Crossfader",
       "deck": "AB",
       "shape": "rect",
       "box": {
