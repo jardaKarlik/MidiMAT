@@ -38,7 +38,10 @@
   #help { position:absolute; left:12px; bottom:10px; color:var(--dim); font-size:12px;
           background:rgba(0,0,0,.6); padding:6px 10px; border-radius:6px; max-width:70%; }
   #loupe { position:absolute; right:12px; top:12px; width:220px; height:220px;
-           border:1px solid var(--line); border-radius:8px; background:#000; }
+           border:1px solid var(--line); border-radius:8px; background:#000;
+           pointer-events:none; /* clicks fall through to the screenshot */
+           box-shadow:0 4px 18px rgba(0,0,0,.6); transition:left .12s, right .12s, top .12s, bottom .12s; }
+  #loupe.hidden { display:none; }
   #msg { margin-top:8px; min-height:18px; color:var(--dim); white-space:pre-wrap; }
   #msg.ok { color:var(--ok); } #msg.bad { color:var(--bad); }
   #drop { position:absolute; inset:0; display:none; align-items:center; justify-content:center;
@@ -77,7 +80,7 @@
       then <kbd>Ctrl+V</kbd> / drop it here.
       Pick a control on the left, <b>drag</b> a box over it. Drag a box to move, corner to resize.
       <kbd>←↑→↓</kbd> nudge (<kbd>Shift</kbd> ×10) · <kbd>Ctrl+A</kbd> + arrows = shift ALL ·
-      <kbd>C</kbd> circle/rect · <kbd>Del</kbd> clear · <kbd>N</kbd> next unplaced ·
+      <kbd>C</kbd> circle/rect · <kbd>Del</kbd> clear · <kbd>N</kbd> next unplaced · <kbd>L</kbd> magnifier on/off ·
       ✨ dashed = AI suggestion: <kbd>Enter</kbd> accept, <kbd>Esc</kbd> reject
     </div>
     <div id="drop">drop screenshot</div>
@@ -203,7 +206,23 @@ stage.addEventListener("mousedown", (e) => {
     say("Pick a control in the list first, then drag a box over it.");
   }
 });
+/* magnifier dodges the cursor: when the pointer gets near it, it hops to the
+ * opposite corner (top-right <-> bottom-left), so no screen area is ever blocked */
+let loupeCorner = "tr";
+function dodgeLoupe(e) {
+  if (loupe.classList.contains("hidden")) return;
+  const r = loupe.getBoundingClientRect(), pad = 60;
+  const near = e.clientX > r.left - pad && e.clientX < r.right + pad &&
+               e.clientY > r.top - pad && e.clientY < r.bottom + pad;
+  if (!near) return;
+  loupeCorner = loupeCorner === "tr" ? "bl" : "tr";
+  Object.assign(loupe.style, loupeCorner === "tr"
+    ? { right: "12px", top: "12px", left: "auto", bottom: "auto" }
+    : { left: "12px", bottom: "70px", right: "auto", top: "auto" });
+}
+
 window.addEventListener("mousemove", (e) => {
+  dodgeLoupe(e);
   mouse = toCanvas(e);
   if (drag) {
     const dx = mouse.x - drag.start.x, dy = mouse.y - drag.start.y;
@@ -260,6 +279,7 @@ window.addEventListener("keydown", (e) => {
     renderList(); draw(); return;
   }
   if (k.toLowerCase() === "n") nextUnplaced();
+  if (k.toLowerCase() === "l") loupe.classList.toggle("hidden");
 });
 
 function selectAll() { sel = new Set(rows.filter(hasBox).map(r => r.id)); renderList(); draw();
