@@ -14,6 +14,8 @@ const DEBUG = qs.get("debug") === "1";
 const SHOT = qs.get("shot"); // ?shot=<widget_id> — deterministic still-frame for visual QA
 const SHOT_LABEL = qs.get("shotlabel"); // ?shotlabel=Z1 · Test — HUD-only still (no widget)
 const WS_URL = "ws://127.0.0.1:8787";
+// ?glow=2.5 overrides layout.glow.strength live in OBS (1 = subtle, 2 = default, 3+ = club)
+const GLOW_PARAM = parseFloat(qs.get("glow"));
 
 // Never die silently again: any JS error becomes a visible red-bordered pill.
 window.addEventListener("error", (e) =>
@@ -68,6 +70,8 @@ function poke(id, value, label, deck) {
   if (s) {
     // liveness ALWAYS refreshes — slow knob turns (±1 steps) must not blink the
     // card/glow out mid-interaction; value gets hysteresis, activity never does.
+    const glowTtl = (layout && layout.glow && layout.glow.ttl_ms) || 600;
+    if (!(now - s.last <= glowTtl)) s.born = now; // fresh touch -> ripple
     s.last = now;
     if (Math.abs(value - s.value) >= 2 || value === 0 || value === 127) {
       s.value = value;
@@ -160,15 +164,82 @@ function roundRect(x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawGlow(widget, intensity, value, now) {
+function rgba(hex, a) {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.replace(/./g, "$&$&") : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+function glowStrength() {
+  if (Number.isFinite(GLOW_PARAM)) return GLOW_PARAM;
+  return (layout.glow && layout.glow.strength) || 2;
+}
+
+/* Soft light pool around the control, ADDED to the picture (composite "lighter")
+ * so it brightens Traktor's knob instead of painting over it. */
+function drawHalo(widget, color, intensity, S) {
+  const { box } = widget;
+  const a = Math.min(0.9, 0.22 * S * intensity);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  if (widget.shape === "circle") {
+    const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+    const core = Math.min(box.w, box.h) / 2;
+    const reach = core + 5 * S + 10 * S * intensity; // tight: mixer knobs sit ~55px apart
+    const g = ctx.createRadialGradient(cx, cy, core * 0.25, cx, cy, reach);
+    g.addColorStop(0, rgba(color, a * 0.55));
+    g.addColorStop(core / reach, rgba(color, a));
+    g.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - reach, cy - reach, reach * 2, reach * 2);
+  } else {
+    // faders/buttons: lit fill that follows the slot; shadow does the spread
+    ctx.fillStyle = rgba(color, a * 0.45);
+    ctx.shadowColor = rgba(color, Math.min(1, a * 1.6));
+    ctx.shadowBlur = 10 * S + 20 * S * intensity;
+    roundRect(box.x, box.y, box.w, box.h, 5);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* One expanding ring when a control is first touched (draws the eye on stream). */
+function drawRipple(widget, born, now, color, S) {
+  const t = (now - born) / 520;
+  if (!(t >= 0 && t < 1)) return;
+  const { box } = widget;
+  const grow = 6 + 30 * t * Math.min(S, 3);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.strokeStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12 * S;
+  ctx.globalAlpha = (1 - t) * (1 - t) * 0.9;
+  ctx.lineWidth = 3 * (1 - t) + 1;
+  if (widget.shape === "circle") {
+    ctx.beginPath();
+    ctx.arc(box.x + box.w / 2, box.y + box.h / 2, Math.min(box.w, box.h) / 2 + grow, 0, Math.PI * 2);
+  } else {
+    roundRect(box.x - grow, box.y - grow, box.w + 2 * grow, box.h + 2 * grow, 6 + grow / 2);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGlow(widget, intensity, value, now, born) {
   const { box } = widget;
   const theme = layout.theme;
   const glow = layout.glow;
   const color = theme.deck_colors[widget.deck] || "#33ccff";
+  const S = glowStrength();
   // subtle pulse so a held control still reads as "active"
   const pulse = 0.85 + 0.15 * Math.sin(now / 140);
 
+  drawHalo(widget, color, intensity, S);
+  if (born !== undefined) drawRipple(widget, born, now, color, S);
+
   ctx.save();
+  ctx.globalCompositeOperation = "lighter";
 
   if (widget.shape === "circle") {
     // round knob: bloom ring + crisp ring + 270° value arc
@@ -176,10 +247,16 @@ function drawGlow(widget, intensity, value, now) {
     const cy = box.y + box.h / 2;
     const r = Math.min(box.w, box.h) / 2 - glow.stroke_width;
     ctx.shadowColor = color;
-    ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse;
-    ctx.lineWidth = glow.stroke_width;
     ctx.strokeStyle = color;
+    ctx.lineWidth = glow.stroke_width + S;
+    ctx.globalAlpha = Math.min(1, (0.25 + 0.5 * intensity) * S / 2);
+    ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse * S * 1.4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke(); // wide bloom
+    ctx.lineWidth = glow.stroke_width;
     ctx.globalAlpha = 0.35 + 0.65 * intensity;
+    ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse * Math.max(1, S * 0.7);
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
@@ -203,12 +280,17 @@ function drawGlow(widget, intensity, value, now) {
   }
 
   const radius = widget.shape === "rect" ? 5 : glow.corner_radius;
-  // bloom pass
+  // bloom passes: wide soft + tighter bright
   ctx.shadowColor = color;
-  ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse;
-  ctx.lineWidth = glow.stroke_width;
   ctx.strokeStyle = color;
+  ctx.lineWidth = glow.stroke_width + S;
+  ctx.globalAlpha = Math.min(1, (0.25 + 0.5 * intensity) * S / 2);
+  ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse * S * 1.4;
+  roundRect(box.x, box.y, box.w, box.h, radius);
+  ctx.stroke();
+  ctx.lineWidth = glow.stroke_width;
   ctx.globalAlpha = 0.35 + 0.65 * intensity;
+  ctx.shadowBlur = (glow.blur_base + glow.blur_gain * intensity) * pulse * Math.max(1, S * 0.7);
   roundRect(box.x, box.y, box.w, box.h, radius);
   ctx.stroke();
 
@@ -320,7 +402,7 @@ function frame() {
     if (SHOT && widgetById.has(SHOT)) {
       // deterministic still-frame for screenshots/QA: fixed value, no decay
       const w = widgetById.get(SHOT);
-      drawGlow(w, 0.9, 100, now);
+      drawGlow(w, 0.9, 100, now, now - ((now % 1600) / 1600) * 520 * 3);
       hud = { id: SHOT, label: w.label, deck: w.deck, value: 100, last: now, first: now };
       drawHud(now, true);
     } else if (SHOT_LABEL) {
@@ -334,8 +416,9 @@ function frame() {
         const age = now - s.last;
         if (age > ttl || age < 0) continue;
         const decay = Math.max(0, Math.min(1, 1 - age / ttl));
-        const intensity = Math.max(s.value / 127, 0.3) * decay;
-        drawGlow(w, intensity, s.value, now);
+        // brightness = ACTIVITY, not knob position (an EQ kill at 0 must glow too)
+        const intensity = (0.75 + 0.25 * (s.value / 127)) * decay;
+        drawGlow(w, intensity, s.value, now, s.born);
       }
       drawHud(now);
     }
