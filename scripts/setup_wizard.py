@@ -26,6 +26,7 @@ import argparse
 import csv
 import datetime as dt
 import queue
+import re
 import sys
 import time
 from pathlib import Path
@@ -164,6 +165,19 @@ PROFILES: dict[str, list[tuple]] = {
 }
 PROFILES["x1"] = PROFILES["fx"] + PROFILES["decks"]
 PROFILES["all"] = PROFILES["z1"] + PROFILES["z1cd"] + PROFILES["x1"] + BROWSER
+
+
+def default_shape(cid: str, kind: str = "") -> str:
+    """circle = real round knob; rect = fader/slider/button; hud = card only
+    (events with no on-screen spot, e.g. 'track loaded', browser commands)."""
+    if cid.endswith("_loaded") or cid.startswith("br_"):
+        return "hud"
+    if ("fader" in cid or cid == "z1_xfade" or "loopsize" in cid
+            or re.fullmatch(r"fx\d_knob\d", cid)):  # Group-mode FX knobs 1-3 are sliders
+        return "rect"
+    if kind == "button":
+        return "rect"
+    return "circle"
 
 
 # --- csv -------------------------------------------------------------------------
@@ -327,7 +341,7 @@ def run_step(lis: Listener, rows: dict[str, dict], step: tuple, i: int, n: int) 
     row.update({"id": cid, "physical": physical, "traktor_out": f"{menu} [{assign}]",
                 "channel": str(ch), "cc": str(cc) if cc < 1000 else "",
                 "label": row["label"] or label, "deck": row["deck"] or deck,
-                "shape": row["shape"] or ("circle" if kind == "knob" else "rect"),
+                "shape": row["shape"] or default_shape(cid, kind),
                 "verified": dt.date.today().isoformat()})
     if cc >= 1000:
         print("  !   Note messages aren't supported by the overlay yet - pick CC instead")
@@ -345,6 +359,8 @@ def main() -> int:
     ap.add_argument("--redo", action="store_true", help="re-test already verified rows")
     ap.add_argument("--only", nargs="+", metavar="ID", help="just these control ids")
     ap.add_argument("--list", action="store_true", help="print the plan and exit")
+    ap.add_argument("--fix-shapes", action="store_true",
+                    help="reset every row's shape to the default rule (circle/rect/hud)")
     args = ap.parse_args()
 
     steps = PROFILES[args.profile]
@@ -353,6 +369,18 @@ def main() -> int:
     rows = load_rows()
     todo = [s for s in steps if args.redo or not rows.get(s[0], {}).get("verified")]
 
+    if args.fix_shapes:
+        kinds = {st[0]: st[6] for st in PROFILES["all"]}
+        n = 0
+        for cid, r in rows.items():
+            want = default_shape(cid, kinds.get(cid, ""))
+            if r["shape"] != want:
+                print(f"  {cid:18s} {r['shape'] or '-':6s} -> {want}")
+                r["shape"] = want
+                n += 1
+        save_rows(rows)
+        print(f"{n} shape(s) fixed. Now: scripts\\build_maps.py (or Save in the editor)")
+        return 0
     if args.list:
         for s in steps:
             r = rows.get(s[0], {})

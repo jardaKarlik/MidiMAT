@@ -140,8 +140,10 @@ function renderList() {
   const q = document.getElementById("filter").value.toLowerCase();
   const match = r => !q || [r.id, r.label, r.deck, r.physical, r.traktor_out]
       .join(" ").toLowerCase().includes(q);
-  const groups = [["Unplaced", rows.filter(r => !hasBox(r) && match(r))],
-                  ["Placed", rows.filter(r => hasBox(r) && match(r))]];
+  const hud = r => r.shape === "hud";
+  const groups = [["Unplaced", rows.filter(r => !hud(r) && !hasBox(r) && match(r))],
+                  ["Placed", rows.filter(r => !hud(r) && hasBox(r) && match(r))],
+                  ["Card only — no box needed", rows.filter(r => hud(r) && match(r))]];
   listEl.innerHTML = "";
   for (const [name, items] of groups) {
     const g = document.createElement("div");
@@ -187,6 +189,8 @@ stage.addEventListener("mousedown", (e) => {
   if (h) {
     if (!sel.has(h.r.id)) select(h.r.id, e.shiftKey);
     drag = { mode: h.mode, start: p, orig: new Map([...sel].map(id => [id, box(byId.get(id))])) };
+  } else if (single() && single().shape === "hud") {
+    say("This control is card-only (shape hud) — it needs no box.");
   } else if (single()) {
     drag = { mode: "draw", start: p, r: single() };
   } else {
@@ -235,7 +239,7 @@ window.addEventListener("keydown", (e) => {
     for (const id of sel) { const r = byId.get(id); r.x = r.y = r.w = r.h = ""; }
     dirty = true; renderList(); draw(); return;
   }
-  if (k.toLowerCase() === "c" && single()) {
+  if (k.toLowerCase() === "c" && single() && single().shape !== "hud") {
     const r = single(); r.shape = r.shape === "circle" ? "rect" : "circle";
     if (hasBox(r)) setBox(r, box(r)); dirty = true; draw(); return;
   }
@@ -245,7 +249,7 @@ window.addEventListener("keydown", (e) => {
 function selectAll() { sel = new Set(rows.filter(hasBox).map(r => r.id)); renderList(); draw();
   say(`${sel.size} boxes selected — arrows shift them all`); }
 function nextUnplaced() {
-  const cur = single(), un = rows.filter(r => !hasBox(r));
+  const cur = single(), un = rows.filter(r => !hasBox(r) && r.shape !== "hud");
   if (!un.length) { say("everything is placed 🎉", "ok"); return; }
   const i = cur ? un.findIndex(r => r.id === cur.id) : -1;
   select(un[(i + 1) % un.length].id);

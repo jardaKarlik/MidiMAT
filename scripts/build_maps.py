@@ -38,7 +38,8 @@ def build(csv_path: str | Path = ROOT / "mapping" / "controls.csv",
              "shape": r["shape"] or "circle"}
         if all(r.get(k, "").strip() for k in "xywh"):
             w["box"] = {k: int(float(r[k])) for k in "xywh"}
-        widgets.append(w)
+        if w["shape"] != "hud":  # hud = card-only event, never a glow box
+            widgets.append(w)
         if not r["cc"].strip():
             skipped.append(r["id"])
             continue
@@ -74,7 +75,7 @@ def build(csv_path: str | Path = ROOT / "mapping" / "controls.csv",
     if not quiet:
         print(f"cc_map.json: {len(entries)} entries (port ~{port!r})")
         print(f"layout.json: {len(lay['widgets'])} widgets with a screen box"
-              f" ({len(unplaced)} HUD-only: place them in the editor)")
+              f" ({len(unplaced)} still need a box: place them in the editor)")
         if skipped:
             print(f"no CC yet (HUD/glow inactive): {', '.join(skipped)}")
     return {"entries": len(entries), "widgets": len(lay["widgets"]),
