@@ -80,7 +80,15 @@ def _detect_yolo(img: np.ndarray, conf: float | None = None) -> list[dict]:
     if _yolo is None:
         from ultralytics import YOLO  # noqa: PLC0415 (heavy: torch)
         _yolo = YOLO(str(YOLO_WEIGHTS))
-    res = _yolo.predict(img, imgsz=1280, conf=conf, verbose=False)[0]
+    # CPU by default: ~0.1 s per screenshot, and old GPUs (e.g. GTX 10xx, sm_61) crash with
+    # current CUDA builds of torch ("no kernel image"). MIDIMAT_YOLO_DEVICE=0 to try a GPU.
+    device = os.environ.get("MIDIMAT_YOLO_DEVICE", "cpu")
+    try:
+        res = _yolo.predict(img, imgsz=1280, conf=conf, verbose=False, device=device)[0]
+    except Exception:  # noqa: BLE001 - GPU unusable -> CPU
+        if device == "cpu":
+            raise
+        res = _yolo.predict(img, imgsz=1280, conf=conf, verbose=False, device="cpu")[0]
     out = []
     for (x0, y0, x1, y1), c, k in zip(res.boxes.xyxy.tolist(), res.boxes.conf.tolist(),
                                       res.boxes.cls.tolist()):
