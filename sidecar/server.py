@@ -16,6 +16,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import pathlib
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -103,11 +104,46 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             return
         super().do_GET()
 
+    def _suggest(self) -> None:
+        """Placer 'Suggest': {"image": dataURL, "ids"?: [...]} -> suggestions JSON.
+        Default ids = controls that still need a box (hud rows excluded)."""
+        try:
+            n = int(self.headers.get("Content-Length", 0))
+            payload = json.loads(self.rfile.read(n) or b"{}")
+            from sidecar import suggest as sg  # noqa: PLC0415 (opencv only when used)
+            wiz, _ = _csv_tools()
+            rows = list(wiz.load_rows().values())
+            ids = payload.get("ids")
+            rows = ([r for r in rows if r["id"] in ids] if ids else
+                    [r for r in rows if r.get("shape") != "hud" and not r.get("x")])
+            if not rows:
+                self._json(200, {"candidates": 0, "suggestions": [], "missing": []})
+                return
+            img = sg.decode_data_url(payload["image"])
+            log.info("suggest: %d control(s), model %s", len(rows),
+                     os.environ.get("MIDIMAT_VLM_MODEL") or sg.DEFAULT_MODEL)
+            res = sg.suggest(img, rows)
+            log.info("suggest: %d candidates, %d suggested, %d missing",
+                     res["candidates"], len(res["suggestions"]), len(res["missing"]))
+            self._json(200, res)
+        except ImportError as e:
+            self._json(500, {"error": f"{e} - run: .venv\\Scripts\\pip install "
+                                      "opencv-python numpy"})
+        except RuntimeError as e:  # e.g. missing OPENROUTER_API_KEY
+            self._json(400, {"error": str(e)})
+        except Exception as e:  # noqa: BLE001
+            log.exception("suggest failed")
+            self._json(500, {"error": repr(e)})
+
     def do_POST(self):  # noqa: N802
         """Editor save: {"rows": [{"id", "x", "y", "w", "h", "shape"?}, ...]}
         -> merge boxes into mapping/controls.csv -> rebuild cc_map/layout ->
         push the new layout to every connected overlay (live, no OBS refresh)."""
-        if self.path.split("?")[0] != "/api/controls":
+        route = self.path.split("?")[0]
+        if route == "/api/suggest":
+            self._suggest()
+            return
+        if route != "/api/controls":
             self._json(404, {"error": "not found"})
             return
         try:

@@ -29,3 +29,9 @@ vision_preview.png
 vision_detections.json
 lovable_design.png
 hid_test.log
+
+# YOLO datasets / training runs (regenerate with scripts/export_yolo.py)
+dataset/
+runs/
+*_marks.png
+*_eval.png

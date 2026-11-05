@@ -61,6 +61,10 @@
         <button id="nextBtn" title="N">Next unplaced</button>
         <button id="allBtn" title="Ctrl+A">Select all placed</button>
       </div>
+      <div class="row">
+        <button id="suggestBtn" title="detect + vision model via OpenRouter">✨ Suggest (AI)</button>
+        <button id="acceptAll" title="accept every dashed suggestion">Accept all</button>
+      </div>
       <div id="msg"></div>
     </header>
     <div id="list"></div>
@@ -73,7 +77,8 @@
       then <kbd>Ctrl+V</kbd> / drop it here.
       Pick a control on the left, <b>drag</b> a box over it. Drag a box to move, corner to resize.
       <kbd>←↑→↓</kbd> nudge (<kbd>Shift</kbd> ×10) · <kbd>Ctrl+A</kbd> + arrows = shift ALL ·
-      <kbd>C</kbd> circle/rect · <kbd>Del</kbd> clear · <kbd>N</kbd> next unplaced
+      <kbd>C</kbd> circle/rect · <kbd>Del</kbd> clear · <kbd>N</kbd> next unplaced ·
+      ✨ dashed = AI suggestion: <kbd>Enter</kbd> accept, <kbd>Esc</kbd> reject
     </div>
     <div id="drop">drop screenshot</div>
   </main>
@@ -86,7 +91,7 @@ const stage = document.getElementById("stage"), ctx = stage.getContext("2d");
 const loupe = document.getElementById("loupe"), lctx = loupe.getContext("2d");
 const listEl = document.getElementById("list"), msgEl = document.getElementById("msg");
 let rows = [], byId = new Map(), sel = new Set(), bg = null, dirty = false;
-let drag = null, mouse = null;
+let drag = null, mouse = null, bgSrc = null;
 
 function say(text, cls = "") { msgEl.textContent = text; msgEl.className = cls; }
 function hasBox(r) { return ["x","y","w","h"].every(k => r[k] !== "" && r[k] != null); }
@@ -121,7 +126,7 @@ async function load() {
 function setBg(src, remember = true) {
   const img = new Image();
   img.onload = () => {
-    bg = img;
+    bg = img; bgSrc = src;
     if (Math.abs(img.width / img.height - stage.width / stage.height) > 0.01)
       say(`Screenshot ${img.width}×${img.height} has a different aspect than the canvas ` +
           `${stage.width}×${stage.height} — it is stretched to fit, exactly like OBS does ` +
@@ -151,7 +156,8 @@ function renderList() {
     for (const r of items) {
       const d = document.createElement("div");
       d.className = "item" + (sel.has(r.id) ? " sel" : "");
-      d.innerHTML = `<div class="id"><span class="dot" style="background:${COLORS[r.deck] || "#888"}"></span>${r.id}</div>` +
+      const sug = r._sugg && !hasBox(r) ? ' <span title="AI suggestion waiting — Enter accepts">✨</span>' : "";
+      d.innerHTML = `<div class="id"><span class="dot" style="background:${COLORS[r.deck] || "#888"}"></span>${r.id}${sug}</div>` +
                     `<div class="sub">${r.deck ? "Deck/Grp " + r.deck + " · " : ""}${r.label}</div>` +
                     `<div class="sub">${r.physical || ""}</div>`;
       d.onclick = (e) => { select(r.id, e.shiftKey); };
@@ -243,6 +249,16 @@ window.addEventListener("keydown", (e) => {
     const r = single(); r.shape = r.shape === "circle" ? "rect" : "circle";
     if (hasBox(r)) setBox(r, box(r)); dirty = true; draw(); return;
   }
+  if (k === "Enter" && sel.size) {
+    let n = 0;
+    for (const id of sel) { const r = byId.get(id); if (r._sugg) { acceptSugg(r); n++; } }
+    if (n) { renderList(); draw(); nextSuggested(); }
+    return;
+  }
+  if (k === "Escape" && sel.size) {
+    for (const id of sel) delete byId.get(id)._sugg;
+    renderList(); draw(); return;
+  }
   if (k.toLowerCase() === "n") nextUnplaced();
 });
 
@@ -263,6 +279,20 @@ function draw() {
          ctx.fillStyle = "#8b92a1"; ctx.font = "32px Segoe UI, sans-serif"; ctx.textAlign = "center";
          ctx.fillText("Paste (Ctrl+V) or drop a Traktor screenshot", stage.width / 2, stage.height / 2);
          ctx.textAlign = "start"; }
+  for (const r of rows) {
+    if (hasBox(r) || !r._sugg) continue;
+    const b = r._sugg, s = sel.has(r.id), col = COLORS[r.deck] || "#ccc";
+    ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = s ? 3 : 1.5; ctx.strokeStyle = col;
+    ctx.globalAlpha = s ? 1 : 0.8; ctx.beginPath();
+    if (r.shape === "circle") ctx.ellipse(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, b.h / 2, 0, 0, 7);
+    else ctx.rect(b.x, b.y, b.w, b.h);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = (s ? "bold " : "") + "12px Segoe UI, sans-serif";
+    const t = "✨ " + r.id + (b.source !== "mark" ? " (" + b.source + ")" : "");
+    const tw = ctx.measureText(t).width;
+    ctx.fillStyle = "rgba(0,0,0,.75)"; ctx.fillRect(b.x, b.y + b.h + 2, tw + 8, 16);
+    ctx.fillStyle = col; ctx.fillText(t, b.x + 4, b.y + b.h + 14); ctx.restore();
+  }
   for (const r of rows) {
     if (!hasBox(r)) continue;
     const b = box(r), s = sel.has(r.id), col = COLORS[r.deck] || "#ccc";
@@ -293,6 +323,38 @@ function drawLoupe() {
   lctx.fillText(`${Math.round(mouse.x)}, ${Math.round(mouse.y)}`, 6, 214);
 }
 
+function acceptSugg(r) {
+  const b = r._sugg; delete r._sugg;
+  setBox(r, b);
+}
+function nextSuggested() {
+  const next = rows.find(r => r._sugg && !hasBox(r));
+  if (next) { select(next.id); listEl.querySelector(".item.sel")?.scrollIntoView({ block: "center" }); }
+  else say("all suggestions handled — Ctrl+S to save", "ok");
+}
+async function suggestBoxes() {
+  if (!bgSrc) { say("Load the OBS screenshot first (Ctrl+V / drop).", "bad"); return; }
+  const todo = rows.filter(r => !hasBox(r) && r.shape !== "hud");
+  if (!todo.length) { say("nothing left to place 🎉", "ok"); return; }
+  say(`asking the vision model about ${todo.length} control(s)… (can take ~30-60 s)`);
+  try {
+    const res = await fetch("/api/suggest", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: bgSrc, ids: todo.map(r => r.id) }) });
+    const out = await res.json();
+    if (!res.ok) throw new Error(out.error || res.status);
+    for (const sg of out.suggestions) {
+      const r = byId.get(sg.id); if (!r) continue;
+      r._sugg = { x: sg.x, y: sg.y, w: sg.w, h: sg.h, source: sg.source };
+    }
+    renderList(); draw();
+    say(`${out.suggestions.length} suggested (dashed) · ${out.missing.length} not found · ` +
+        `${out.candidates} candidates detected\nEnter = accept selected · Esc = reject · ` +
+        `drag to fix · Accept all`, "ok");
+    nextSuggested();
+  } catch (e) { say("suggest failed: " + e.message, "bad"); }
+}
+
 async function save() {
   say("saving…");
   try {
@@ -311,6 +373,11 @@ document.getElementById("filter").oninput = renderList;
 document.getElementById("save").onclick = save;
 document.getElementById("nextBtn").onclick = nextUnplaced;
 document.getElementById("allBtn").onclick = selectAll;
+document.getElementById("suggestBtn").onclick = suggestBoxes;
+document.getElementById("acceptAll").onclick = () => {
+  let n = 0; for (const r of rows) if (r._sugg && !hasBox(r)) { acceptSugg(r); n++; }
+  renderList(); draw(); say(`${n} suggestion(s) accepted — review, then Ctrl+S`, "ok");
+};
 document.getElementById("pick").onclick = () => document.getElementById("file").click();
 document.getElementById("file").onchange = (e) => readFile(e.target.files[0]);
 window.addEventListener("paste", (e) => {
