@@ -41,8 +41,13 @@ Misses: FX ON buttons classified as *knob* (fx1/2/4_on), deck_a_sync. Fix: train
 boxes for unmapped look-alikes + more FX-on examples. Inference runs on CPU (~0.1 s);
 GTX 10xx (sm_61) is unsupported by cu128 torch builds (cu126 still supports it).
 
-Next: **auto re-fit** — detect, estimate global scale/offset against the known layout,
-snap every box (window moved/resized) — no vision model needed for a known layout.
+**Auto re-fit** (`sidecar/refit.py`, editor 🎯 *Detect & re-fit*): detect → vote for
+(scale, offset) over all same-kind template/detection pairs → ICP refine (per-axis least
+squares) → snap each box onto its detection (user's box size kept, centred on the
+detection) or keep the mapped box when nothing matched ("fit"). Offline, no vision model.
+`scripts/test_refit.py`: shifts up to 400 px, scales 0.67–1.25×, 8 % missed + 12 spurious
++ 4 % misclassified detections → transform within 0.01 / 1 px, 100 % of boxes within 3 px.
+CLI: `python -m sidecar.refit shot.png`.
 
 ## Use it
 

@@ -123,6 +123,11 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             log.info("suggest: %d control(s), model %s", len(rows),
                      os.environ.get("MIDIMAT_VLM_MODEL") or sg.DEFAULT_MODEL)
             res = sg.suggest(img, rows)
+            cv = load_layout()["canvas"]  # editor works in canvas coords, not image px
+            fx, fy = cv["width"] / img.shape[1], cv["height"] / img.shape[0]
+            for sug in res["suggestions"]:
+                sug["x"], sug["w"] = round(sug["x"] * fx), round(sug["w"] * fx)
+                sug["y"], sug["h"] = round(sug["y"] * fy), round(sug["h"] * fy)
             log.info("suggest: %d candidates, %d suggested, %d missing",
                      res["candidates"], len(res["suggestions"]), len(res["missing"]))
             self._json(200, res)
@@ -135,6 +140,42 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             log.exception("suggest failed")
             self._json(500, {"error": repr(e)})
 
+    def _refit(self) -> None:
+        """Placer 'Detect & re-fit': {"image": dataURL} -> detect controls, fit the saved
+        layout onto them (scale + shift), return per-control suggestions (canvas coords)."""
+        try:
+            n = int(self.headers.get("Content-Length", 0))
+            payload = json.loads(self.rfile.read(n) or b"{}")
+            from sidecar import refit as rf  # noqa: PLC0415
+            from sidecar import suggest as sg  # noqa: PLC0415
+            wiz, _ = _csv_tools()
+            template = rf.template_rows(list(wiz.load_rows().values()))
+            if len(template) < 3:
+                self._json(400, {"error": "need at least 3 placed boxes to re-fit"})
+                return
+            img = sg.decode_data_url(payload["image"])
+            cv = load_layout()["canvas"]
+            dets = rf.dets_to_canvas(sg.detect_candidates(img), img.shape[1], img.shape[0],
+                                     cv["width"], cv["height"])
+            if len(dets) < 3:
+                self._json(400, {"error": f"only {len(dets)} control(s) detected - is this "
+                                          "a Traktor screenshot? (detector: "
+                                          f"{sg.detector_backend()})"})
+                return
+            res = rf.refit(template, dets)
+            res["detector"], res["detections"] = sg.detector_backend(), len(dets)
+            t = res["transform"]
+            log.info("refit: %s, %d detections, matched %d/%d, scale %.3f/%.3f, "
+                     "shift %+.1f/%+.1f, rms %.1fpx", res["detector"], len(dets), t["matched"],
+                     len(template), t["sx"], t["sy"], t["tx"], t["ty"], t["rms"])
+            self._json(200, res)
+        except ImportError as e:
+            self._json(500, {"error": f"{e} - run: .venv\\Scripts\\python.exe -m pip "
+                                      "install -r requirements.txt"})
+        except Exception as e:  # noqa: BLE001
+            log.exception("refit failed")
+            self._json(500, {"error": repr(e)})
+
     def do_POST(self):  # noqa: N802
         """Editor save: {"rows": [{"id", "x", "y", "w", "h", "shape"?}, ...]}
         -> merge boxes into mapping/controls.csv -> rebuild cc_map/layout ->
@@ -142,6 +183,9 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
         route = self.path.split("?")[0]
         if route == "/api/suggest":
             self._suggest()
+            return
+        if route == "/api/refit":
+            self._refit()
             return
         if route != "/api/controls":
             self._json(404, {"error": "not found"})

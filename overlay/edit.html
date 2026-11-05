@@ -57,7 +57,7 @@
       <h1>MidiMAT placer</h1>
       <input id="filter" type="search" placeholder="filter (id, label, deck…)" />
       <div class="row">
-        <button id="pick">Load screenshot…</button>
+        <button id="pick">📷 Upload screenshot</button>
         <button id="save" class="primary">Save (Ctrl+S)</button>
       </div>
       <div class="row">
@@ -65,7 +65,8 @@
         <button id="allBtn" title="Ctrl+A">Select all placed</button>
       </div>
       <div class="row">
-        <button id="suggestBtn" title="detect + vision model via OpenRouter">✨ Suggest (AI)</button>
+        <button id="refitBtn" class="primary" title="detect controls on the screenshot and move ALL boxes onto them (window moved/resized)">🎯 Detect &amp; re-fit</button>
+        <button id="suggestBtn" title="detect + vision model via OpenRouter (for boxes never placed)">✨ Suggest (AI)</button>
         <button id="acceptAll" title="accept every dashed suggestion">Accept all</button>
       </div>
       <div id="msg"></div>
@@ -77,7 +78,7 @@
     <canvas id="loupe" width="220" height="220"></canvas>
     <div id="help">
       <b>Screenshot first:</b> OBS → right-click the Traktor capture source → <i>Screenshot (Source)</i>,
-      then <kbd>Ctrl+V</kbd> / drop it here.
+      then 📷 / <kbd>Ctrl+V</kbd> / drop it here. Window moved or resized? → 🎯 Detect &amp; re-fit.
       Pick a control on the left, <b>drag</b> a box over it. Drag a box to move, corner to resize.
       <kbd>←↑→↓</kbd> nudge (<kbd>Shift</kbd> ×10) · <kbd>Ctrl+A</kbd> + arrows = shift ALL ·
       <kbd>C</kbd> circle/rect · <kbd>Del</kbd> clear · <kbd>N</kbd> next unplaced · <kbd>L</kbd> magnifier on/off ·
@@ -159,7 +160,7 @@ function renderList() {
     for (const r of items) {
       const d = document.createElement("div");
       d.className = "item" + (sel.has(r.id) ? " sel" : "");
-      const sug = r._sugg && !hasBox(r) ? ' <span title="AI suggestion waiting — Enter accepts">✨</span>' : "";
+      const sug = r._sugg ? ' <span title="AI suggestion waiting — Enter accepts">✨</span>' : "";
       d.innerHTML = `<div class="id"><span class="dot" style="background:${COLORS[r.deck] || "#888"}"></span>${r.id}${sug}</div>` +
                     `<div class="sub">${r.deck ? "Deck/Grp " + r.deck + " · " : ""}${r.label}</div>` +
                     `<div class="sub">${r.physical || ""}</div>`;
@@ -300,7 +301,7 @@ function draw() {
          ctx.fillText("Paste (Ctrl+V) or drop a Traktor screenshot", stage.width / 2, stage.height / 2);
          ctx.textAlign = "start"; }
   for (const r of rows) {
-    if (hasBox(r) || !r._sugg) continue;
+    if (!r._sugg) continue;
     const b = r._sugg, s = sel.has(r.id), col = COLORS[r.deck] || "#ccc";
     ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = s ? 3 : 1.5; ctx.strokeStyle = col;
     ctx.globalAlpha = s ? 1 : 0.8; ctx.beginPath();
@@ -348,7 +349,7 @@ function acceptSugg(r) {
   setBox(r, b);
 }
 function nextSuggested() {
-  const next = rows.find(r => r._sugg && !hasBox(r));
+  const next = rows.find(r => r._sugg);
   if (next) { select(next.id); listEl.querySelector(".item.sel")?.scrollIntoView({ block: "center" }); }
   else say("all suggestions handled — Ctrl+S to save", "ok");
 }
@@ -375,6 +376,35 @@ async function suggestBoxes() {
   } catch (e) { say("suggest failed: " + e.message, "bad"); }
 }
 
+async function refitBoxes() {
+  if (!bgSrc) { say("Upload the OBS screenshot first (📷 / Ctrl+V / drop).", "bad"); return; }
+  say("detecting controls and fitting your layout…");
+  try {
+    const res = await fetch("/api/refit", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: bgSrc }) });
+    const out = await res.json();
+    if (!res.ok) throw new Error(out.error || res.status);
+    let moved = 0, same = 0;
+    for (const sg of out.suggestions) {
+      const r = byId.get(sg.id); if (!r) continue;
+      const cur = hasBox(r) ? box(r) : null;
+      if (cur && Math.abs(cur.x - sg.x) <= 1 && Math.abs(cur.y - sg.y) <= 1 &&
+          Math.abs(cur.w - sg.w) <= 1 && Math.abs(cur.h - sg.h) <= 1) { same++; continue; }
+      r._sugg = { x: sg.x, y: sg.y, w: sg.w, h: sg.h, source: sg.source }; moved++;
+    }
+    renderList(); draw();
+    const t = out.transform;
+    const fitOnly = out.unmatched.length ? ` · ${out.unmatched.length} without detection (mapped only — check them)` : "";
+    say(`${out.detector} found ${out.detections} controls · matched ${t.matched}/${out.suggestions.length}\n` +
+        `scale ${t.sx.toFixed(3)}×${t.sy.toFixed(3)} · shift ${t.tx >= 0 ? "+" : ""}${t.tx.toFixed(0)}, ` +
+        `${t.ty >= 0 ? "+" : ""}${t.ty.toFixed(0)} px · fit error ${t.rms.toFixed(1)} px\n` +
+        (moved ? `${moved} box(es) would move (dashed) · ${same} already right${fitOnly}\n` +
+                 `Accept all, or Enter / Esc one by one, then Ctrl+S`
+               : `all ${same} boxes already sit right — nothing to change 🎉`), moved ? "" : "ok");
+    if (moved) nextSuggested();
+  } catch (e) { say("re-fit failed: " + e.message, "bad"); }
+}
+
 async function save() {
   say("saving…");
   try {
@@ -394,8 +424,9 @@ document.getElementById("save").onclick = save;
 document.getElementById("nextBtn").onclick = nextUnplaced;
 document.getElementById("allBtn").onclick = selectAll;
 document.getElementById("suggestBtn").onclick = suggestBoxes;
+document.getElementById("refitBtn").onclick = refitBoxes;
 document.getElementById("acceptAll").onclick = () => {
-  let n = 0; for (const r of rows) if (r._sugg && !hasBox(r)) { acceptSugg(r); n++; }
+  let n = 0; for (const r of rows) if (r._sugg) { acceptSugg(r); n++; }
   renderList(); draw(); say(`${n} suggestion(s) accepted — review, then Ctrl+S`, "ok");
 };
 document.getElementById("pick").onclick = () => document.getElementById("file").click();
