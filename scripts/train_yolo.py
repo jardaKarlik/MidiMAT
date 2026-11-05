@@ -1,6 +1,7 @@
 """Train the Traktor control detector (YOLO) from your screenshots + placed boxes.
 
     .\\.venv\\Scripts\\python.exe -m pip install -r requirements-train.txt   # once (~1-2 GB, torch)
+    .\\.venv\\Scripts\\python.exe scripts\\train_yolo.py            # collect today's OBS shots + train
     .\\.venv\\Scripts\\python.exe scripts\\train_yolo.py docs\\traktor-ui\\screens\\*.png
     .\\.venv\\Scripts\\python.exe scripts\\train_yolo.py docs\\traktor-ui\\screens\\*.png --device 0   # NVIDIA GPU
 
@@ -24,7 +25,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("images", nargs="+", help="clean screenshots (NOT *_eval/_marks images)")
+    ap.add_argument("images", nargs="*", help="clean screenshots (NOT *_eval/_marks images); "
+                    "default: collect today's OBS screenshots from Videos, then use "
+                    "docs/traktor-ui/screens/train/*.png + traktor_4fx.png")
+    ap.add_argument("--since", help="collect screenshots from this date (YYYY-MM-DD)")
     ap.add_argument("--epochs", type=int, default=150)
     ap.add_argument("--imgsz", type=int, default=1280, help="small controls need high res")
     ap.add_argument("--device", default="cpu", help="cpu | 0 (first CUDA GPU) | mps")
@@ -33,6 +37,19 @@ def main() -> int:
     ap.add_argument("--name", default="traktor")
     args = ap.parse_args()
 
+    if not args.images:
+        import datetime as dt  # noqa: PLC0415
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import collect_screens  # noqa: PLC0415
+        collect_screens.collect(since=dt.date.fromisoformat(args.since) if args.since else None)
+        screens = ROOT / "docs" / "traktor-ui" / "screens"
+        args.images = [str(p) for p in sorted((screens / "train").glob("*.png"))]
+        if (screens / "traktor_4fx.png").exists():
+            args.images.append(str(screens / "traktor_4fx.png"))
+        if len(args.images) < 5:
+            raise SystemExit(f"only {len(args.images)} screenshot(s) - take ~15 varied ones "
+                             "(OBS: right-click Traktor capture > Screenshot (Source))")
+        print(f"training on {len(args.images)} screenshot(s)\n")
     bad = [f for f in args.images if f.endswith(("_eval.png", "_marks.png"))]
     if bad:
         raise SystemExit(f"these are tool OUTPUT images with boxes drawn on them: {bad}")
