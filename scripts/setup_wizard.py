@@ -9,7 +9,9 @@ that exactly that CC arrives, and writes the row into mapping/controls.csv.
 
 Usage (Traktor running, Generic MIDI device with Out-Port = loopMIDI):
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py               # z1 profile
-    .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile x1  # FX units / decks
+    .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile z1cd  # mixer, decks C/D
+    .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile fx    # FX units 1-4 (X1s)
+    .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile decks # play/cue/sync/loop A-D
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --profile all --redo
     .\\.venv\\Scripts\\python.exe scripts\\setup_wizard.py --list
 Then:  .\\.venv\\Scripts\\python.exe scripts\\build_maps.py
@@ -56,7 +58,7 @@ def _mixer_channel(d: str, side: str) -> list[tuple]:
          "Volume", d, "knob", "'Volume Adjust' = the channel fader"),
         (f"z1_cue_{lo}", f"Z1 {side} CUE (headphone) button", "Mixer > Monitor Cue On",
          f"Deck {d}", "Headphone Cue", d, "button", "'Monitor Cue' = headphone cue"),
-        (f"z1_mfx_on_{lo}", f"Z1 {side} FX/FILTER ON button (skip if none)",
+        (f"z1_mfx_on_{lo}", f"Z1 {side} round FX on/off button",
          "Mixer > Mixer FX On", f"Deck {d}", "Filter On", d, "button", FLTR_HINT),
     ]
 
@@ -95,23 +97,45 @@ def _deck(d: str) -> list[tuple]:
     ]
 
 
+MIXER_GLOBAL = [
+    ("z1_xfade", "Z1 crossfader", "Mixer > X-Fader > Position", "Global (no deck)",
+     "Crossfader", "AB", "knob", "Assignment may be greyed out - that's fine"),
+    ("z1_cue_mix", "Z1 CUE MIX knob (skip if none)", "Mixer > Monitor Mix Adjust",
+     "Global (no deck)", "Cue Mix", "AB", "knob", "'Monitor' = headphones"),
+    ("z1_cue_vol", "Z1 CUE VOL knob (skip if none)", "Mixer > Monitor Volume Adjust",
+     "Global (no deck)", "Cue Volume", "AB", "knob", ""),
+    ("z1_main", "Z1 MAIN/MASTER knob (skip if none)", "Mixer > Master Volume Adjust",
+     "Global (no deck)", "Master Volume", "AB", "knob", ""),
+    ("z1_mfx_sel", "Z1 center FX select buttons 1-4 (+ the wide button below them)",
+     "Mixer > Mixer FX Selector", "Deck A", "Mixer FX", "AB", "button",
+     "press 1,2,3,4 and the wide button in turn - each sends a different value. If "
+     "nothing arrives with Deck A, the selector may be global: try another Assignment"),
+]
+SWITCHED = "(Z1 deck switch ON: {side} channel = Deck {d})"
+
+
+def _mixer_cd() -> list[tuple]:
+    rows = []
+    for d, side in (("C", "LEFT"), ("D", "RIGHT")):
+        for r in _mixer_channel(d, side):
+            rows.append((r[0], f"{r[1]} {SWITCHED.format(side=side, d=d)}", *r[2:]))
+    return rows
+
+
 PROFILES: dict[str, list[tuple]] = {
-    "z1": _mixer_channel("A", "LEFT") + _mixer_channel("B", "RIGHT") + [
-        ("z1_xfade", "Z1 crossfader", "Mixer > X-Fader > Position", "Global (no deck)",
-         "Crossfader", "AB", "knob", "Assignment may be greyed out - that's fine"),
-        ("z1_cue_mix", "Z1 CUE MIX knob (skip if none)", "Mixer > Monitor Mix Adjust",
-         "Global (no deck)", "Cue Mix", "AB", "knob", "'Monitor' = headphones"),
-        ("z1_cue_vol", "Z1 CUE VOL knob (skip if none)", "Mixer > Monitor Volume Adjust",
-         "Global (no deck)", "Cue Volume", "AB", "knob", ""),
-        ("z1_main", "Z1 MAIN/MASTER knob (skip if none)", "Mixer > Master Volume Adjust",
-         "Global (no deck)", "Master Volume", "AB", "knob", ""),
-    ],
-    "x1": _fx_unit(1, "X1 #1 LEFT FX section") + _fx_unit(2, "X1 #1 RIGHT FX section")
-          + _deck("A") + _deck("B"),
-    "x1b": _fx_unit(3, "X1 #2 LEFT FX section") + _fx_unit(4, "X1 #2 RIGHT FX section")
-           + _deck("C") + _deck("D"),
+    # Traktor out-mappings are per DECK / FX UNIT, not per device: whichever
+    # controller (or the mouse) moves Deck C's EQ, Traktor reports Deck C's EQ.
+    # => Z1 deck switching and the two X1 MK3s need no tracking in MidiMAT.
+    "z1": _mixer_channel("A", "LEFT") + _mixer_channel("B", "RIGHT") + MIXER_GLOBAL,
+    "z1cd": _mixer_cd(),
+    "fx": (_fx_unit(1, "X1 FX section driving FX Unit 1")
+           + _fx_unit(2, "X1 FX section driving FX Unit 2")
+           + _fx_unit(3, "X1 FX section driving FX Unit 3")
+           + _fx_unit(4, "X1 FX section driving FX Unit 4")),
+    "decks": _deck("A") + _deck("B") + _deck("C") + _deck("D"),
 }
-PROFILES["all"] = PROFILES["z1"] + PROFILES["x1"] + PROFILES["x1b"]
+PROFILES["x1"] = PROFILES["fx"] + PROFILES["decks"]
+PROFILES["all"] = PROFILES["z1"] + PROFILES["z1cd"] + PROFILES["x1"]
 
 
 # --- csv -------------------------------------------------------------------------
