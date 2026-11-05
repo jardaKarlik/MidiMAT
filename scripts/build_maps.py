@@ -49,7 +49,7 @@ def main() -> int:
         if key in seen_keys:
             raise SystemExit(f"ch{ch} cc{cc} used by both {seen_keys[key]} and {r['id']}")
         seen_keys[key] = r["id"]
-        label = f"Deck {r['deck']} · {r['label']}" if r["deck"] in "ABCD" and r["deck"] else r["label"]
+        label = f"Deck {r['deck']} · {r['label']}" if r["deck"] in ("A", "B", "C", "D") else r["label"]
         entries.append({"port": args.port, "channel": ch - 1, "kind": "cc", "number": cc,
                         "label": label, "deck": r["deck"] or None, "widget": r["id"]})
 
