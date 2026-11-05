@@ -71,8 +71,12 @@ def detector_backend() -> str:
     return "yolo" if YOLO_WEIGHTS.exists() else "opencv"
 
 
-def _detect_yolo(img: np.ndarray, conf: float = 0.25) -> list[dict]:
+def _detect_yolo(img: np.ndarray, conf: float | None = None) -> list[dict]:
+    """conf: MIDIMAT_YOLO_CONF (default 0.10). The first model is very precise but shy
+    (P 0.985 / R 0.59), so a low threshold recovers missed controls cheaply."""
     global _yolo
+    if conf is None:
+        conf = float(os.environ.get("MIDIMAT_YOLO_CONF", "0.10"))
     if _yolo is None:
         from ultralytics import YOLO  # noqa: PLC0415 (heavy: torch)
         _yolo = YOLO(str(YOLO_WEIGHTS))
