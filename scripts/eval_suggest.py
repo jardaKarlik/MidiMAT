@@ -33,6 +33,14 @@ def center_err(a: dict, b: dict) -> float:
             + ((a["y"] + a["h"] / 2) - (b["y"] + b["h"] / 2)) ** 2) ** 0.5
 
 
+def centre_hit(c: dict, g: dict) -> bool:
+    """Size-agnostic: candidate centre lies inside the central half of your box.
+    (Hand-drawn boxes are looser/tighter than detector edges, so IoU under-reports.)"""
+    cx, cy = c["x"] + c["w"] / 2, c["y"] + c["h"] / 2
+    return (abs(cx - (g["x"] + g["w"] / 2)) <= max(4, g["w"] / 4)
+            and abs(cy - (g["y"] + g["h"] / 2)) <= max(4, g["h"] / 4))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("image")
@@ -58,20 +66,33 @@ def main() -> int:
     cands = S.detect_candidates(img)
     print(f"\n{len(gt)} placed controls · {len(cands)} candidates detected\n")
     print("STAGE 1 - detector (does a candidate cover your box?)")
-    hit = 0
+    hit = chit = 0
     errs = []
     for g in gt:
         best = max(cands, key=lambda c: S._iou(c, g["box"]), default=None)
         iou = S._iou(best, g["box"]) if best else 0
+        near = min(cands, key=lambda c: center_err(c, g["box"]), default=None)
         ok = iou >= 0.5
+        cok = bool(near) and centre_hit(near, g["box"])
         hit += ok
+        chit += cok
         if best:
             errs.append(center_err(best, g["box"]))
         b = g["box"]
         cv2.rectangle(vis, (int(b["x"]), int(b["y"])), (int(b["x"] + b["w"]), int(b["y"] + b["h"])),
                       (60, 220, 60), 2)
-        if not ok:
-            print(f"  miss {g['id']:18s} best IoU {iou:.2f}")
+        if not cok:
+            print(f"  miss {g['id']:18s} best IoU {iou:.2f} · nearest centre "
+                  f"{center_err(near, g['box']) if near else 0:.0f}px ({near['kind'] if near else '-'})")
+    print(f"  centre-hit recall: {chit}/{len(gt)} = {chit / len(gt):.0%}   (the number that matters)")
+    by_shape = {}
+    for g in gt:
+        near = min(cands, key=lambda c: center_err(c, g["box"]), default=None)
+        k = g.get("shape", "?")
+        t = by_shape.setdefault(k, [0, 0]); t[1] += 1; t[0] += bool(near) and centre_hit(near, g["box"])
+    print("  by shape: " + ", ".join(f"{k} {a}/{b}" for k, (a, b) in by_shape.items()))
+    kinds = {k: sum(1 for c in cands if c["kind"] == k) for k in ("knob", "slider", "button")}
+    print(f"  candidates by kind: {kinds}")
     print(f"  recall@IoU0.5: {hit}/{len(gt)} = {hit / len(gt):.0%}"
           + (f" · median centre error {sorted(errs)[len(errs) // 2]:.1f}px" if errs else ""))
 
