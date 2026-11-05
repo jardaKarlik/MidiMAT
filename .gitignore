@@ -35,3 +35,5 @@ dataset/
 runs/
 *_marks.png
 *_eval.png
+models/*.pt
+yolo11*.pt

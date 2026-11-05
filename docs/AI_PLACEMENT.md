@@ -15,6 +15,17 @@ fully automatic — vision models are good at *which*, weak at *exact pixels*.
 Model: `MIDIMAT_VLM_MODEL` (default `qwen/qwen2.5-vl-72b-instruct`; try
 `google/gemini-2.5-flash`). Nano Banana is an image *generator* — not useful here.
 
+## Findings so far (2026-11-05, real 1920×1080 Traktor screenshot)
+
+- OpenCV detector: knobs found (centre within ~5–10 px) but ~850–970 candidates of
+  noise (text, waveforms, status dots); flat text buttons and thin fader slots missed.
+- Full pipeline with the vision model: **0/65** — with ~1000 tiny overlapping tags the
+  model cannot read the numbers. Set-of-Mark only works with a clean, small candidate set.
+- Pitfall: never evaluate on `*_eval.png` / `*_marks.png` (tool output with boxes drawn on).
+- ⇒ Next: train YOLO on our own boxes (clean candidates), then assign identities by
+  geometry against the existing layout (free, offline); vision model only for brand-new
+  layouts, on cropped regions with few tags.
+
 ## Use it
 
 ```powershell
@@ -42,15 +53,17 @@ Replaces stage 1 with a model that *learned* what Traktor controls look like.
 2. **Export** — your placed boxes become labels for every screenshot:
    `python scripts\export_yolo.py docs\traktor-ui\screens\*.png`
    → `dataset/yolo/` (YOLO format: `class cx cy w h`, normalised 0–1) + `data.yaml`.
-3. **Train** (GPU: Colab/Modal ~5 min; CPU: ~30 min for the nano model):
-   ```bash
-   pip install ultralytics
-   yolo detect train data=dataset/yolo/data.yaml model=yolo11n.pt imgsz=1280 epochs=150
+3. **Train** (GPU ~5 min; CPU ~30–60 min for the nano model) — one command does export + train
+   with UI-safe augmentation (no flips / hue shifts) and installs the result:
+   ```powershell
+   .\.venv\Scripts\python.exe -m pip install -r requirements-train.txt   # once, pulls torch
+   .\.venv\Scripts\python.exe scripts\train_yolo.py docs\traktor-ui\screens\*.png            # CPU
+   .\.venv\Scripts\python.exe scripts\train_yolo.py docs\traktor-ui\screens\*.png --device 0 # NVIDIA GPU
    ```
    Watch `runs/detect/train/results.png`: loss going down, mAP50 going up.
 4. **Evaluate** on a screenshot it never saw (`yolo detect predict model=runs/detect/train/weights/best.pt source=new.png`).
-5. **Plug in**: swap `detect_candidates()` for the YOLO model and re-run `eval_suggest.py`
-   to compare against OpenCV.
+5. **Plug in**: automatic — `models/traktor_yolo.pt` exists ⇒ `suggest` and `eval_suggest`
+   use YOLO. Compare: `$env:MIDIMAT_DETECTOR="opencv"` vs `"yolo"` on the same screenshot.
 
 Caveat: widgets you never boxed are treated as "background" — box more of the UI for a
 cleaner detector.

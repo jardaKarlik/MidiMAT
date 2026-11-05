@@ -1,0 +1,2 @@
+# Only for training the control detector (scripts/train_yolo.py) - pulls torch (~1-2 GB)
+ultralytics>=8.3

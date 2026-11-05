@@ -58,8 +58,48 @@ def _nms(cands: list[dict], thr: float = 0.35) -> list[dict]:
     return keep
 
 
+YOLO_WEIGHTS = ROOT / "models" / "traktor_yolo.pt"
+YOLO_KINDS = {0: "knob", 1: "slider", 2: "button"}
+_yolo = None
+
+
+def detector_backend() -> str:
+    """MIDIMAT_DETECTOR=opencv|yolo forces one; default: yolo when trained weights exist."""
+    forced = os.environ.get("MIDIMAT_DETECTOR", "").lower()
+    if forced in ("opencv", "yolo"):
+        return forced
+    return "yolo" if YOLO_WEIGHTS.exists() else "opencv"
+
+
+def _detect_yolo(img: np.ndarray, conf: float = 0.25) -> list[dict]:
+    global _yolo
+    if _yolo is None:
+        from ultralytics import YOLO  # noqa: PLC0415 (heavy: torch)
+        _yolo = YOLO(str(YOLO_WEIGHTS))
+    res = _yolo.predict(img, imgsz=1280, conf=conf, verbose=False)[0]
+    out = []
+    for (x0, y0, x1, y1), c, k in zip(res.boxes.xyxy.tolist(), res.boxes.conf.tolist(),
+                                      res.boxes.cls.tolist()):
+        out.append({"x": int(round(x0)), "y": int(round(y0)), "w": int(round(x1 - x0)),
+                    "h": int(round(y1 - y0)), "kind": YOLO_KINDS.get(int(k), "button"),
+                    "score": float(c)})
+    return out
+
+
 def detect_candidates(img: np.ndarray) -> list[dict]:
-    """-> [{x,y,w,h,kind: knob|slider|button, score}] in image pixels."""
+    """-> [{x,y,w,h,kind: knob|slider|button, score, mark}] in image pixels."""
+    if detector_backend() == "yolo":
+        out = _nms(_detect_yolo(img), thr=0.5)
+        scale = img.shape[0] / 1080.0
+        out.sort(key=lambda c: (c["y"] // max(1, int(20 * scale)), c["x"]))
+        for i, c in enumerate(out, 1):
+            c["mark"] = i
+        return out
+    return _detect_opencv(img)
+
+
+def _detect_opencv(img: np.ndarray) -> list[dict]:
+    """Classic CV fallback: knobs via Hough circles, rects via contours (noisy on flat UI)."""
     h_img, w_img = img.shape[:2]
     scale = h_img / 1080.0
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

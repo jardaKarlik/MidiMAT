@@ -48,6 +48,9 @@ def main() -> int:
     ap.add_argument("--model")
     args = ap.parse_args()
 
+    if args.image.endswith(("_eval.png", "_marks.png")):
+        raise SystemExit("that is a tool OUTPUT image (boxes drawn on it) - use the clean "
+                         "screenshot, e.g. docs\\traktor-ui\\screens\\traktor_4fx.png")
     img = cv2.imread(args.image)
     if img is None:
         raise SystemExit(f"cannot read {args.image}")
@@ -64,7 +67,8 @@ def main() -> int:
 
     vis = img.copy()
     cands = S.detect_candidates(img)
-    print(f"\n{len(gt)} placed controls · {len(cands)} candidates detected\n")
+    print(f"\n{len(gt)} placed controls · {len(cands)} candidates detected "
+          f"(detector: {S.detector_backend()})\n")
     print("STAGE 1 - detector (does a candidate cover your box?)")
     hit = chit = 0
     errs = []
