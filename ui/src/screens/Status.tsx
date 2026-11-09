@@ -13,15 +13,9 @@ import {
   type ServerLogPayload,
 } from "@/lib/ipc";
 
-// The design's seed log, kept verbatim so the Status screen matches it.
-const initialLog: LogLine[] = [
-  { time: "14:32:01", level: "INFO", message: "overlay: http://127.0.0.1:8080/overlay/index.html" },
-  { time: "14:32:05", level: "INFO", message: "midi connected: TRAKTOR X1 MK3" },
-  { time: "14:32:07", level: "INFO", message: "client connected: 127.0.0.1" },
-  { time: "14:32:14", level: "INFO", message: "received MIDI: 90 40 7F (ch 1, note 64, vel 127)" },
-  { time: "14:32:18", level: "INFO", message: "client disconnected: 127.0.0.1" },
-];
-
+// The log starts EMPTY; real lines arrive over IPC (ClientMessage.ServerLog).
+// The design's mock entries are intentionally not used — showing fake rows in a live
+// app is worse than showing none.
 const MAX_LOGS = 200;
 
 const LEVEL_MAP: Record<LogLevel, LogLine["level"]> = {
@@ -43,7 +37,7 @@ export function Status() {
   const [demoMode, setDemoMode] = useState(false);
   const [nhlNative, setNhlNative] = useState(true);
   const [autoStart, setAutoStart] = useState(true);
-  const [log, setLog] = useState<LogLine[]>(initialLog);
+  const [log, setLog] = useState<LogLine[]>([]);
 
   useHostMessages(
     useCallback((message) => {
@@ -58,11 +52,12 @@ export function Status() {
 
   return (
     <>
+      {/* Uptime / event count are pending a real source (the sidecar's /api/health). */}
       <ServerStatusCard
         httpUrl={HTTP_BASE}
         wsUrl={WS_URL}
-        uptime="2h 14m 36s"
-        eventCount={12482}
+        uptime={"\u2014"}
+        eventCount={0}
         onRestart={() => postToHost(HostMessage.ServerRestart, {})}
         onStop={() => postToHost(HostMessage.ServerStop, {})}
         onOpenOverlay={() => window.open(OVERLAY_URL, "_blank", "noopener,noreferrer")}

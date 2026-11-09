@@ -27,28 +27,74 @@ public static class DependencyChecker
     };
 
     // ---------------------------------------------------------------------
-    // loopMIDI — official installer registers under TOBIAS-ERICHSEN\loopMIDI.
-    // NOTE: the exact value names below are the documented/commonly observed ones;
-    // treat the key's existence as the primary signal and only surface values if present.
+    // loopMIDI — everything Tobias Erichsen registers lives under
+    // "SOFTWARE\Tobias Erichsen" (note the SPACE and mixed case; the older
+    // "TOBIAS-ERICHSEN" spelling this probe first used does not exist).
+    //   HKCU\...\loopMIDI        = the app's settings (present once used)
+    //   HKLM\...\teVirtualMIDI64 = the kernel driver
+    // plus an "Uninstall\loopMIDI" entry that carries the version.
     // ---------------------------------------------------------------------
     private static DependencyStatus CheckLoopMidi()
     {
-        foreach (var hive in new[] { RegistryHive.LocalMachine, RegistryHive.CurrentUser })
+        var present = new[]
         {
-            if (TryReadKey(hive, @"SOFTWARE\TOBIAS-ERICHSEN\loopMIDI", out var values))
-            {
-                var install = values.TryGetValue("InstallDir", out var dir)
-                    ? dir?.ToString()
-                    : null;
-                var detail = string.IsNullOrEmpty(install)
-                    ? $"registry key present ({hive})"
-                    : $"installed at {install}";
-                return new DependencyStatus(LoopMidi, true, detail);
-            }
+            (RegistryHive.CurrentUser, @"SOFTWARE\Tobias Erichsen\loopMIDI"),
+            (RegistryHive.LocalMachine, @"SOFTWARE\Tobias Erichsen\loopMIDI"),
+            (RegistryHive.LocalMachine, @"SOFTWARE\Tobias Erichsen"),
+        }.Any(probe => TryReadKey(probe.Item1, probe.Item2, out _));
+
+        var version = FindUninstallVersion("loopMIDI");
+
+        if (present || version is not null)
+        {
+            return new DependencyStatus(LoopMidi, true,
+                version is null ? "installed" : $"installed \u00b7 v{version}");
         }
 
         return new DependencyStatus(LoopMidi, false,
-            @"not found (looked for HKLM/HKCU\SOFTWARE\TOBIAS-ERICHSEN\loopMIDI)");
+            @"not found (looked for SOFTWARE\Tobias Erichsen and Uninstall\loopMIDI)");
+    }
+
+    /// <summary>Find the DisplayVersion of an installed program by its Uninstall DisplayName.</summary>
+    private static string? FindUninstallVersion(string displayName)
+    {
+        var roots = new[]
+        {
+            (RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+            (RegistryHive.LocalMachine, @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+            (RegistryHive.CurrentUser, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+        };
+
+        foreach (var (hive, root) in roots)
+        {
+            foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+            {
+                try
+                {
+                    using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+                    using var key = baseKey.OpenSubKey(root);
+                    if (key is null)
+                    {
+                        continue;
+                    }
+
+                    foreach (var sub in key.GetSubKeyNames())
+                    {
+                        using var app = key.OpenSubKey(sub);
+                        if (app?.GetValue("DisplayName") as string == displayName)
+                        {
+                            return app.GetValue("DisplayVersion") as string;
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+                {
+                    // Unreadable view — try the next.
+                }
+            }
+        }
+
+        return null;
     }
 
     // ---------------------------------------------------------------------

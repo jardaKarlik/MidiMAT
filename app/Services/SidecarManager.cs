@@ -39,10 +39,13 @@ public sealed class SidecarManager : IDisposable
 {
     /// <summary>
     /// Scaffold safety switch. When false, <see cref="StartIfAutoStartEnabled"/> is a no-op
-    /// so the app never spawns a child process during build/test. Flip to true once the
-    /// PyInstaller sidecar is bundled (see README "Stubbed").
+    /// so the app never spawns a child process during build/test.
+    ///
+    /// It is TRUE now: the sidecar can be launched either from the bundled PyInstaller EXE
+    /// (release) or from the repo's venv via python (dev) — see <see cref="ResolveSidecarLaunch"/>.
+    /// Auto-start is still additionally gated on <c>config.server.auto_start</c>.
     /// </summary>
-    public const bool AutoStartEnabled = false;
+    public const bool AutoStartEnabled = true;
 
     // Restart-with-backoff tuning (DESIGN_APP.md §10).
     private const int MaxRestartAttempts = 5;
@@ -75,8 +78,11 @@ public sealed class SidecarManager : IDisposable
 
     public SidecarState State { get; private set; } = SidecarState.Stopped;
 
-    /// <summary>Absolute path to the sidecar executable (resolved, may not exist yet).</summary>
-    public string ExecutablePath => ResolveSidecarPath(_config);
+    /// <summary>
+    /// Human-readable description of the resolved launch target (the bundled EXE path, or
+    /// "python server.py"), or "&lt;not found&gt;" when nothing could be located.
+    /// </summary>
+    public string ExecutablePath => ResolveSidecarLaunch(_config)?.Description ?? "<not found>";
 
     /// <summary>
     /// Start only if the compile-time <see cref="AutoStartEnabled"/> flag and the user's
@@ -103,17 +109,18 @@ public sealed class SidecarManager : IDisposable
                 return;
             }
 
-            var exePath = ExecutablePath;
-            if (!File.Exists(exePath))
+            var spec = ResolveSidecarLaunch(_config);
+            if (spec is null)
             {
                 SetState(SidecarState.Failed);
-                RaiseLog($"[SidecarManager] sidecar not found: {exePath}", isError: true);
+                RaiseLog("[SidecarManager] sidecar not found — no midimat-server.exe and no "
+                         + "sidecar/server.py reachable from " + AppContext.BaseDirectory, isError: true);
                 return;
             }
 
             _stopping = false;
             SetState(_restartAttempts > 0 ? SidecarState.Restarting : SidecarState.Starting);
-            LaunchProcess(exePath);
+            LaunchProcess(spec);
         }
     }
 
@@ -145,19 +152,19 @@ public sealed class SidecarManager : IDisposable
         Start();
     }
 
-    private void LaunchProcess(string exePath)
+    private void LaunchProcess(SidecarLaunchSpec spec)
     {
         var psi = new ProcessStartInfo
         {
-            FileName = exePath,
-            WorkingDirectory = Path.GetDirectoryName(exePath) ?? AppContext.BaseDirectory,
+            FileName = spec.FileName,
+            WorkingDirectory = spec.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
 
-        foreach (var arg in BuildArguments(_config))
+        foreach (var arg in spec.Arguments)
         {
             psi.ArgumentList.Add(arg);
         }
@@ -174,7 +181,7 @@ public sealed class SidecarManager : IDisposable
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
-            RaiseLog($"[SidecarManager] started pid={process.Id}: {exePath}", isError: false);
+            RaiseLog($"[SidecarManager] started pid={process.Id}: {spec.Description}", isError: false);
             SetState(SidecarState.Running);
         }
         catch (Exception ex)
@@ -289,28 +296,71 @@ public sealed class SidecarManager : IDisposable
     }
 
     /// <summary>
-    /// Resolve the sidecar EXE: prefer the path inside %LOCALAPPDATA%\MidiMAT\sidecar,
-    /// then fall back to a repo checkout next to the running EXE (dev convenience).
+    /// Resolve how to launch the sidecar:
+    ///   1. the bundled PyInstaller EXE in %LOCALAPPDATA%\MidiMAT\sidecar (release), or
+    ///   2. a repo-local build\midimat-server.exe (dev, post-PyInstaller), or
+    ///   3. the repo's venv python running sidecar/server.py (dev, source).
+    /// Returns <c>null</c> when none of these exist.
     /// </summary>
-    internal static string ResolveSidecarPath(MidiMatConfig config)
+    internal static SidecarLaunchSpec? ResolveSidecarLaunch(MidiMatConfig config)
     {
-        var appDataExe = Path.Combine(
-            ConfigStore.AppDataDirectory, "sidecar", "midimat-server.exe");
-        if (File.Exists(appDataExe))
+        var bundled = Path.Combine(ConfigStore.AppDataDirectory, "sidecar", "midimat-server.exe");
+        if (File.Exists(bundled))
         {
-            return appDataExe;
+            return new SidecarLaunchSpec(
+                bundled, BuildArguments(config),
+                Path.GetDirectoryName(bundled)!, bundled);
         }
 
-        // Dev fallback: <repo>\app\bin\<cfg>\<tfm>\win-x64\ -> <repo>\build\midimat-server.exe
-        var devExe = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "..", "build", "midimat-server.exe"));
-        if (File.Exists(devExe))
+        var repoRoot = FindRepoRoot();
+        if (repoRoot is not null)
         {
-            return devExe;
+            var built = Path.Combine(repoRoot, "build", "midimat-server.exe");
+            if (File.Exists(built))
+            {
+                return new SidecarLaunchSpec(built, BuildArguments(config), repoRoot, built);
+            }
+
+            var serverPy = Path.Combine(repoRoot, "sidecar", "server.py");
+            if (File.Exists(serverPy))
+            {
+                var python = ResolvePython(repoRoot);
+                if (python is not null)
+                {
+                    var args = new List<string> { serverPy };
+                    args.AddRange(BuildArguments(config));
+                    return new SidecarLaunchSpec(
+                        python, args, repoRoot, $"{python} {serverPy}");
+                }
+            }
         }
 
-        // Nothing found: return the canonical location so callers/logs are deterministic.
-        return appDataExe;
+        return null;
+    }
+
+    /// <summary>Prefer the repo venv interpreter; fall back to "python" on PATH.</summary>
+    private static string? ResolvePython(string repoRoot)
+    {
+        var venv = Path.Combine(repoRoot, ".venv", "Scripts", "python.exe");
+        return File.Exists(venv) ? venv : "python";
+    }
+
+    /// <summary>
+    /// Walk up from the running EXE looking for the repo root (identified by
+    /// <c>sidecar\server.py</c>). Returns null when the app is not running from a checkout.
+    /// </summary>
+    private static string? FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        for (var i = 0; i < 12 && dir is not null; i++, dir = dir.Parent)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "sidecar", "server.py")))
+            {
+                return dir.FullName;
+            }
+        }
+
+        return null;
     }
 
     private static void KillProcess(Process? process)
@@ -362,3 +412,10 @@ public sealed class SidecarManager : IDisposable
         _restartCts?.Dispose();
     }
 }
+
+/// <summary>A concrete way to start the sidecar (bundled EXE, or python + server.py).</summary>
+public sealed record SidecarLaunchSpec(
+    string FileName,
+    IReadOnlyList<string> Arguments,
+    string WorkingDirectory,
+    string Description);
