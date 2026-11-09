@@ -355,7 +355,7 @@ def run_step(lis: Listener, rows: dict[str, dict], step: tuple, i: int, n: int) 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Guided Traktor out-mapping setup")
     ap.add_argument("--profile", choices=sorted(PROFILES), default="z1")
-    ap.add_argument("--port", default="loopMIDI", help="MIDI input substring")
+    ap.add_argument("--port", default="MidiMAT", help="MIDI input substring")
     ap.add_argument("--redo", action="store_true", help="re-test already verified rows")
     ap.add_argument("--only", nargs="+", metavar="ID", help="just these control ids")
     ap.add_argument("--list", action="store_true", help="print the plan and exit")

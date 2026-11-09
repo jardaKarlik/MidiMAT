@@ -18,7 +18,7 @@ on `main`.
 - **`✨ Suggest (AI)`** — optional auto-placement for never-placed boxes (opt-in;
   requires the extra vision dependency).
 - **Guided mapping wizard** (`scripts/setup_wizard.py`) — walks each Traktor
-  out-mapping one control at a time, listens on the loopMIDI port, verifies the CC
+  out-mapping one control at a time, listens on the MidiMAT port, verifies the CC
   arrives, and writes the row to `mapping/controls.csv`.
 - **HUD card** — control name + live value, for controls that have no on-screen widget.
 - **Demo mode** (`?demo=1`) — the overlay animates with no controller or server.

@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def build(csv_path: str | Path = ROOT / "mapping" / "controls.csv",
-          port: str = "loopMIDI", quiet: bool = False) -> dict:
+          port: str = "MidiMAT", quiet: bool = False) -> dict:
     """CSV -> cc_map.json + layout.json. Returns a small summary dict."""
     with open(csv_path, encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
@@ -85,7 +85,7 @@ def build(csv_path: str | Path = ROOT / "mapping" / "controls.csv",
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", default=str(ROOT / "mapping" / "controls.csv"))
-    ap.add_argument("--port", default="loopMIDI", help="port substring Traktor sends to")
+    ap.add_argument("--port", default="MidiMAT", help="port substring Traktor sends to")
     args = ap.parse_args()
     build(args.csv, args.port)
     return 0
