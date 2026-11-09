@@ -1,0 +1,7 @@
+# Dependencies
+node_modules/
+
+# Local build scratch (the real build output goes to ../app/Resources/ui)
+dist/
+*.tsbuildinfo
+.vite/
