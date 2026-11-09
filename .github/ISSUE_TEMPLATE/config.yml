@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/jardaKarlik/MidiMAT#readme
+    about: Setup, OBS configuration, and architecture notes live in the README and docs/.
+  - name: 💬 Questions & ideas
+    url: https://github.com/jardaKarlik/MidiMAT/discussions
+    about: For open-ended questions or "how do I…", please use Discussions.
+  - name: 🔒 Security issue
+    url: https://github.com/jardaKarlik/MidiMAT/security/advisories/new
+    about: Please report vulnerabilities privately, not as a public issue.

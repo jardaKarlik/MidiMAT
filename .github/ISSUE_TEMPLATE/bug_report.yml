@@ -1,0 +1,104 @@
+name: 🐞 Bug report
+description: Something isn't working — a control doesn't glow, the server won't start, the editor misbehaves.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! The more of this you can fill in, the faster it can be fixed.
+        For **mapping** problems, please also run the two commands in the last section.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+      placeholder: |
+        I turned the Z1 filter knob, the log showed the CC, but no widget glowed.
+        I expected the "Filter A" widget to light up.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start `.\scripts\run.ps1 --midi --no-demo`
+        2. Turn the Z1 channel-A filter knob
+        3. Nothing glows
+    validations:
+      required: true
+
+  - type: input
+    id: controller
+    attributes:
+      label: Controller(s)
+      description: Model and how it's connected (native Traktor mode vs. MIDI mode).
+      placeholder: "Traktor KONTROL X1 MK3 (native) + Z1 MK2 (native)"
+    validations:
+      required: true
+
+  - type: input
+    id: traktor
+    attributes:
+      label: Traktor version
+      placeholder: "Traktor Pro 4.5.1"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: MidiMAT version / commit
+      description: Output of `git rev-parse --short HEAD`, or the release version.
+      placeholder: "0d93ebe"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - Sidecar / server
+        - Overlay (in OBS)
+        - Editor / placement
+        - Mapping / wizard
+        - Traktor config
+        - Desktop app
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / console output
+      description: Paste the sidecar log around the problem (`server.log`, or the console).
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: mapping-diag
+    attributes:
+      label: Mapping diagnostics (only for mapping problems)
+      description: |
+        Run these and paste the output:
+        `.\.venv\Scripts\python.exe -m sidecar.midi_tap list`
+        `.\.venv\Scripts\python.exe -m sidecar.midi_tap watch --port "YOUR DEVICE"`
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true
+        - label: I'm on Windows (MidiMAT is Windows-only today).
+          required: true
