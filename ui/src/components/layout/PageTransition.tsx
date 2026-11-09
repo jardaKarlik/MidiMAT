@@ -16,7 +16,6 @@ export function PageTransition({ pageKey, children }: PageTransitionProps) {
   return (
     <motion.div
       key={pageKey}
-      className="h-full"
       initial={reduce ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={reduce ? undefined : { opacity: 0, y: -8 }}

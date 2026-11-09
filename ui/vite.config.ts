@@ -32,6 +32,11 @@ function preserveGitkeep(): Plugin {
 export default defineConfig({
   // Relative asset URLs — required for the WebView2 virtual host mapping.
   base: "./",
+  // `@/` points at src/ so the ported design components keep their original
+  // import specifiers verbatim (matches the design's tsconfig alias).
+  resolve: {
+    alias: { "@": resolve(here, "src") },
+  },
   plugins: [react(), tailwindcss(), preserveGitkeep()],
   build: {
     outDir,

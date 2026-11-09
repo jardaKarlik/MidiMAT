@@ -6,6 +6,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",

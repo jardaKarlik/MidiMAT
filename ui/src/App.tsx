@@ -1,10 +1,11 @@
 import { AnimatePresence } from "framer-motion";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
+import { AppShell } from "./components/midimat/app-shell";
 import { PageTransition } from "./components/layout/PageTransition";
-import { Sidebar } from "./components/layout/Sidebar";
 import { HostMessage, type HostInboundMessage, type PageId, postToHost, useHostMessages } from "./lib/ipc";
-import { SCREENS } from "./screens";
+import { NavContext, type NavContextValue } from "./lib/navigation";
+import { PAGES } from "./screens";
 
 export function App() {
   const [page, setPage] = useState<PageId>("setup-summary");
@@ -26,18 +27,21 @@ export function App() {
     postToHost(HostMessage.Navigate, { page: next });
   }, []);
 
-  const Screen = SCREENS[page];
+  const nav = useMemo<NavContextValue>(() => ({ current: page, navigate }), [page, navigate]);
 
+  const { title, subtitle, Component } = PAGES[page];
+
+  // The shell (sidebar + scroll area) is rendered once and stays mounted while
+  // only the screen body cross-fades — so navigating never remounts the sidebar.
   return (
-    <div className="flex h-full w-full overflow-hidden bg-bg-primary text-text">
-      <Sidebar current={page} onNavigate={navigate} />
-      <main className="relative flex-1 overflow-hidden">
+    <NavContext.Provider value={nav}>
+      <AppShell title={title} subtitle={subtitle}>
         <AnimatePresence mode="wait" initial={false}>
           <PageTransition pageKey={page}>
-            <Screen />
+            <Component />
           </PageTransition>
         </AnimatePresence>
-      </main>
-    </div>
+      </AppShell>
+    </NavContext.Provider>
   );
 }

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" fill="none" role="img" aria-label="MidiMAT">
+  <defs>
+    <linearGradient id="mm-arc" x1="60" y1="200" x2="200" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#33ccff"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="mm-knob" x1="128" y1="78" x2="128" y2="194" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#252932"/>
+      <stop offset="1" stop-color="#1a1d23"/>
+    </linearGradient>
+    <filter id="mm-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="24" y="24" width="208" height="208" rx="48" stroke="#33ccff" stroke-width="9" filter="url(#mm-glow)"/>
+  <path d="M72.85 191.15 A78 78 0 1 1 187.75 85.86" stroke="url(#mm-arc)" stroke-width="11" stroke-linecap="round" filter="url(#mm-glow)"/>
+  <circle cx="128" cy="136" r="56" fill="url(#mm-knob)" stroke="#3a3f49" stroke-width="3"/>
+  <path d="M143.6 120.4 L160.5 103.5" stroke="#33ccff" stroke-width="8" stroke-linecap="round" filter="url(#mm-glow)"/>
+</svg>
