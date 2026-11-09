@@ -17,6 +17,7 @@ public sealed partial class MainWindow : Window
 
     private IpcBridge? _ipc;
     private SidecarManager? _sidecar;
+    private SetupService? _setup;
     private MidiMatConfig _config = new();
 
     public MainWindow()
@@ -75,6 +76,9 @@ public sealed partial class MainWindow : Window
 
         _ipc = new IpcBridge(WebView);
         _ipc.MessageFromWeb += OnMessageFromWeb;
+
+        _setup = new SetupService(_config, _sidecar);
+        _setup.ProgressChanged += OnSetupProgress;
 
         core.NavigationCompleted += (_, _) =>
         {
@@ -163,9 +167,12 @@ public sealed partial class MainWindow : Window
                 break;
 
             case IpcMessageTypes.SetupStart:
+                // Fire-and-forget: the wizard advances on setup:progress, not on a reply.
+                _ = RunSetupStepAsync(message.PayloadJson);
+                break;
+
             case IpcMessageTypes.SetupComplete:
-                // Re-probe so the Setup Summary reflects the current machine.
-                PostDepsStatus();
+                HandleSetupComplete(message.PayloadJson);
                 break;
 
             default:
@@ -193,4 +200,87 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Payload of the <c>config:save</c> message (mirrors ui/src/lib/ipc.ts).</summary>
     private sealed record ConfigSavePayload(bool SkipChecks);
+
+    // ----------------------------------------------------------------------
+    // Setup wizard
+    // ----------------------------------------------------------------------
+
+    /// <summary>Run one wizard step; progress is streamed via <see cref="OnSetupProgress"/>.</summary>
+    private async Task RunSetupStepAsync(string payloadJson)
+    {
+        if (_setup is null)
+        {
+            return;
+        }
+
+        int step;
+        try
+        {
+            step = JsonSerializer.Deserialize<SetupStartPayload>(payloadJson, JsonOptions)?.Step ?? 0;
+        }
+        catch (JsonException)
+        {
+            step = 0;
+        }
+
+        if (!Enum.IsDefined(typeof(SetupStep), step))
+        {
+            System.Diagnostics.Debug.WriteLine($"[ipc] setup:start with unknown step {step}");
+            PostDepsStatus();
+            return;
+        }
+
+        try
+        {
+            await _setup.RunAsync((SetupStep)step);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ipc] setup step {step} threw: {ex}");
+        }
+
+        // Re-probe so the Setup Summary reflects whatever the step changed.
+        PostDepsStatus();
+    }
+
+    /// <summary>Forward a <see cref="SetupService"/> progress update to the UI.</summary>
+    private void OnSetupProgress(object? sender, SetupProgress progress)
+        => _ipc?.PostToWeb(IpcMessageTypes.SetupProgress, new
+        {
+            step = progress.Step,
+            status = progress.Status,
+            detail = progress.Detail,
+        });
+
+    /// <summary>
+    /// Handle <c>setup:complete</c>: re-probe, and persist <c>skip_checks: true</c> when the
+    /// payload asks for it (accepts either <c>skipChecks</c> or <c>skip_checks</c>).
+    /// </summary>
+    private void HandleSetupComplete(string payloadJson)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(payloadJson);
+            var root = doc.RootElement;
+
+            if (root.ValueKind == JsonValueKind.Object &&
+                (IsTrue(root, "skipChecks") || IsTrue(root, "skip_checks")))
+            {
+                _config.SkipChecks = true;
+                ConfigStore.Save(_config);
+            }
+        }
+        catch (JsonException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ipc] setup:complete parse failed: {ex.Message}");
+        }
+
+        PostDepsStatus();
+    }
+
+    private static bool IsTrue(JsonElement element, string name)
+        => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;
+
+    /// <summary>Payload of the <c>setup:start</c> message (mirrors ui/src/lib/ipc.ts).</summary>
+    private sealed record SetupStartPayload(int Step);
 }

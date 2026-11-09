@@ -3,9 +3,10 @@ import { useCallback, useState } from "react";
 
 import { SetupCard, type SetupItem } from "@/components/midimat/setup-card";
 import type { StatusTone } from "@/components/midimat/status-dot";
+import { useSetupWizard } from "@/components/setup/setup-wizard-context";
 import { Button } from "@/components/ui/button";
 import { OVERLAY_URL } from "@/lib/constants";
-import { ClientMessage, HostMessage, postToHost, useHostMessages, type DepsStatus } from "@/lib/ipc";
+import { ClientMessage, useHostMessages, type DepsStatus } from "@/lib/ipc";
 
 type ComponentKey = "loopMidi" | "traktor" | "server" | "obs";
 
@@ -80,6 +81,7 @@ function buildItems(deps: DepsStatus): SetupItem[] {
 }
 
 export function SetupSummary() {
+  const { open: openSetupWizard } = useSetupWizard();
   const [deps, setDeps] = useState<DepsStatus>(PLACEHOLDER_DEPS);
 
   useHostMessages(
@@ -100,7 +102,7 @@ export function SetupSummary() {
         ))}
       </div>
       <div className="mt-8 flex flex-wrap gap-4">
-        <Button variant="outline" size="lg" onClick={() => postToHost(HostMessage.SetupStart, { step: 1 })}>
+        <Button variant="outline" size="lg" onClick={openSetupWizard}>
           <RefreshCw /> Re-run setup
         </Button>
         <Button
