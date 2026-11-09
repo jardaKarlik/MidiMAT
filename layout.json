@@ -13,7 +13,9 @@
       "A": "#33ccff",
       "B": "#3dff9e",
       "FX": "#ffcc33",
-      "AB": "#ffffff"
+      "AB": "#ffffff",
+      "C": "#c084fc",
+      "D": "#ff8a65"
     },
     "label_bg": "rgba(0, 0, 0, 0.6)",
     "label_color": "#ffffff"
@@ -42,10 +44,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 892,
-        "y": 135,
-        "w": 46,
-        "h": 46
+        "x": 909,
+        "y": 123,
+        "w": 40,
+        "h": 40
       }
     },
     {
@@ -54,8 +56,8 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 892,
-        "y": 193,
+        "x": 907,
+        "y": 176,
         "w": 46,
         "h": 46
       }
@@ -66,10 +68,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 892,
-        "y": 255,
-        "w": 46,
-        "h": 46
+        "x": 908,
+        "y": 231,
+        "w": 44,
+        "h": 44
       }
     },
     {
@@ -78,10 +80,10 @@
       "deck": "A",
       "shape": "circle",
       "box": {
-        "x": 837,
-        "y": 217,
-        "w": 46,
-        "h": 46
+        "x": 848,
+        "y": 179,
+        "w": 34,
+        "h": 34
       }
     },
     {
@@ -90,10 +92,10 @@
       "deck": "A",
       "shape": "rect",
       "box": {
-        "x": 875,
-        "y": 300,
-        "w": 24,
-        "h": 150
+        "x": 916,
+        "y": 293,
+        "w": 28,
+        "h": 143
       }
     },
     {
@@ -102,8 +104,8 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 957,
-        "y": 135,
+        "x": 963,
+        "y": 121,
         "w": 46,
         "h": 46
       }
@@ -114,10 +116,10 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 957,
-        "y": 193,
-        "w": 46,
-        "h": 46
+        "x": 965,
+        "y": 177,
+        "w": 42,
+        "h": 42
       }
     },
     {
@@ -126,10 +128,10 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 957,
-        "y": 255,
-        "w": 46,
-        "h": 46
+        "x": 965,
+        "y": 232,
+        "w": 41,
+        "h": 41
       }
     },
     {
@@ -138,10 +140,10 @@
       "deck": "B",
       "shape": "circle",
       "box": {
-        "x": 1029,
-        "y": 217,
-        "w": 46,
-        "h": 46
+        "x": 1035,
+        "y": 178,
+        "w": 37,
+        "h": 37
       }
     },
     {
@@ -150,10 +152,10 @@
       "deck": "B",
       "shape": "rect",
       "box": {
-        "x": 1008,
-        "y": 300,
-        "w": 24,
-        "h": 150
+        "x": 976,
+        "y": 292,
+        "w": 31,
+        "h": 142
       }
     },
     {
@@ -162,10 +164,946 @@
       "deck": "AB",
       "shape": "rect",
       "box": {
-        "x": 847,
-        "y": 573,
-        "w": 220,
+        "x": 881,
+        "y": 612,
+        "w": 157,
+        "h": 42
+      }
+    },
+    {
+      "id": "z1_gain_a",
+      "label": "Gain",
+      "deck": "A",
+      "shape": "circle",
+      "box": {
+        "x": 842,
+        "y": 121,
+        "w": 47,
+        "h": 47
+      }
+    },
+    {
+      "id": "z1_cue_a",
+      "label": "Headphone Cue",
+      "deck": "A",
+      "shape": "rect",
+      "box": {
+        "x": 849,
+        "y": 359,
+        "w": 33,
+        "h": 28
+      }
+    },
+    {
+      "id": "z1_mfx_on_a",
+      "label": "Filter On",
+      "deck": "A",
+      "shape": "rect",
+      "box": {
+        "x": 883,
+        "y": 213,
+        "w": 16,
+        "h": 16
+      }
+    },
+    {
+      "id": "z1_gain_b",
+      "label": "Gain",
+      "deck": "B",
+      "shape": "circle",
+      "box": {
+        "x": 1032,
+        "y": 123,
+        "w": 43,
+        "h": 43
+      }
+    },
+    {
+      "id": "z1_cue_b",
+      "label": "Headphone Cue",
+      "deck": "B",
+      "shape": "rect",
+      "box": {
+        "x": 1037,
+        "y": 359,
+        "w": 32,
+        "h": 28
+      }
+    },
+    {
+      "id": "z1_mfx_on_b",
+      "label": "Filter On",
+      "deck": "B",
+      "shape": "rect",
+      "box": {
+        "x": 1069,
+        "y": 214,
+        "w": 14,
+        "h": 16
+      }
+    },
+    {
+      "id": "z1_cue_vol",
+      "label": "Cue Volume",
+      "deck": "AB",
+      "shape": "circle",
+      "box": {
+        "x": 1843,
+        "y": 612,
+        "w": 38,
+        "h": 38
+      }
+    },
+    {
+      "id": "z1_main",
+      "label": "Master Volume",
+      "deck": "AB",
+      "shape": "circle",
+      "box": {
+        "x": 1034,
+        "y": 39,
+        "w": 40,
+        "h": 40
+      }
+    },
+    {
+      "id": "z1_cue_mix",
+      "label": "Cue Mix",
+      "deck": "AB",
+      "shape": "circle",
+      "box": {
+        "x": 1778,
+        "y": 612,
+        "w": 38,
+        "h": 38
+      }
+    },
+    {
+      "id": "z1_mfx_sel",
+      "label": "Mixer FX",
+      "deck": "AB",
+      "shape": "rect",
+      "box": {
+        "x": 835,
+        "y": 213,
+        "w": 45,
+        "h": 17
+      }
+    },
+    {
+      "id": "z1_eq_hi_c",
+      "label": "EQ High",
+      "deck": "C",
+      "shape": "circle",
+      "box": {
+        "x": 908,
+        "y": 122,
+        "w": 42,
+        "h": 42
+      }
+    },
+    {
+      "id": "z1_eq_mid_c",
+      "label": "EQ Mid",
+      "deck": "C",
+      "shape": "circle",
+      "box": {
+        "x": 908,
+        "y": 177,
+        "w": 44,
+        "h": 44
+      }
+    },
+    {
+      "id": "z1_eq_lo_c",
+      "label": "EQ Low",
+      "deck": "C",
+      "shape": "circle",
+      "box": {
+        "x": 909,
+        "y": 231,
+        "w": 44,
+        "h": 44
+      }
+    },
+    {
+      "id": "z1_fltr_c",
+      "label": "Filter",
+      "deck": "C",
+      "shape": "circle",
+      "box": {
+        "x": 849,
+        "y": 508,
+        "w": 32,
+        "h": 32
+      }
+    },
+    {
+      "id": "z1_gain_c",
+      "label": "Gain",
+      "deck": "C",
+      "shape": "circle",
+      "box": {
+        "x": 848,
+        "y": 453,
+        "w": 33,
+        "h": 33
+      }
+    },
+    {
+      "id": "z1_fader_c",
+      "label": "Volume",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 788,
+        "y": 484,
+        "w": 37,
+        "h": 59
+      }
+    },
+    {
+      "id": "z1_cue_c",
+      "label": "Headphone Cue",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 788,
+        "y": 576,
+        "w": 27,
+        "h": 25
+      }
+    },
+    {
+      "id": "z1_mfx_on_c",
+      "label": "Filter On",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 876,
+        "y": 540,
+        "w": 20,
+        "h": 13
+      }
+    },
+    {
+      "id": "z1_eq_hi_d",
+      "label": "EQ High",
+      "deck": "D",
+      "shape": "circle",
+      "box": {
+        "x": 964,
+        "y": 122,
+        "w": 43,
+        "h": 43
+      }
+    },
+    {
+      "id": "z1_eq_mid_d",
+      "label": "EQ Mid",
+      "deck": "D",
+      "shape": "circle",
+      "box": {
+        "x": 963,
+        "y": 176,
+        "w": 45,
+        "h": 45
+      }
+    },
+    {
+      "id": "z1_eq_lo_d",
+      "label": "EQ Low",
+      "deck": "D",
+      "shape": "circle",
+      "box": {
+        "x": 963,
+        "y": 230,
+        "w": 45,
+        "h": 45
+      }
+    },
+    {
+      "id": "z1_fltr_d",
+      "label": "Filter",
+      "deck": "D",
+      "shape": "circle",
+      "box": {
+        "x": 1039,
+        "y": 509,
+        "w": 30,
+        "h": 30
+      }
+    },
+    {
+      "id": "z1_gain_d",
+      "label": "Gain",
+      "deck": "D",
+      "shape": "circle",
+      "box": {
+        "x": 1037,
+        "y": 452,
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "id": "z1_fader_d",
+      "label": "Volume",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1869,
+        "y": 487,
+        "w": 40,
+        "h": 57
+      }
+    },
+    {
+      "id": "z1_cue_d",
+      "label": "Headphone Cue",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1873,
+        "y": 578,
+        "w": 37,
+        "h": 23
+      }
+    },
+    {
+      "id": "z1_mfx_on_d",
+      "label": "Filter On",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1069,
+        "y": 538,
+        "w": 21,
+        "h": 17
+      }
+    },
+    {
+      "id": "fx1_drywet",
+      "label": "FX1 Dry/Wet",
+      "deck": "FX",
+      "shape": "circle",
+      "box": {
+        "x": 133,
+        "y": 43,
+        "w": 26,
         "h": 26
+      }
+    },
+    {
+      "id": "fx1_knob1",
+      "label": "FX1 Knob 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 176,
+        "y": 36,
+        "w": 47,
+        "h": 17
+      }
+    },
+    {
+      "id": "fx1_knob2",
+      "label": "FX1 Knob 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 252,
+        "y": 35,
+        "w": 45,
+        "h": 18
+      }
+    },
+    {
+      "id": "fx1_knob3",
+      "label": "FX1 Knob 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 327,
+        "y": 36,
+        "w": 45,
+        "h": 17
+      }
+    },
+    {
+      "id": "fx1_on",
+      "label": "FX1 On",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 153,
+        "y": 64,
+        "w": 21,
+        "h": 17
+      }
+    },
+    {
+      "id": "fx1_btn1",
+      "label": "FX1 Button 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 218,
+        "y": 53,
+        "w": 19,
+        "h": 20
+      }
+    },
+    {
+      "id": "fx1_btn2",
+      "label": "FX1 Button 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 296,
+        "y": 54,
+        "w": 19,
+        "h": 18
+      }
+    },
+    {
+      "id": "fx1_btn3",
+      "label": "FX1 Button 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 371,
+        "y": 53,
+        "w": 21,
+        "h": 19
+      }
+    },
+    {
+      "id": "fx2_drywet",
+      "label": "FX2 Dry/Wet",
+      "deck": "FX",
+      "shape": "circle",
+      "box": {
+        "x": 1629,
+        "y": 42,
+        "w": 27,
+        "h": 27
+      }
+    },
+    {
+      "id": "fx2_knob1",
+      "label": "FX2 Knob 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1676,
+        "y": 37,
+        "w": 39,
+        "h": 16
+      }
+    },
+    {
+      "id": "fx2_knob2",
+      "label": "FX2 Knob 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1750,
+        "y": 37,
+        "w": 42,
+        "h": 17
+      }
+    },
+    {
+      "id": "fx2_knob3",
+      "label": "FX2 Knob 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1827,
+        "y": 36,
+        "w": 42,
+        "h": 17
+      }
+    },
+    {
+      "id": "fx2_on",
+      "label": "FX2 On",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1655,
+        "y": 65,
+        "w": 19,
+        "h": 14
+      }
+    },
+    {
+      "id": "fx2_btn1",
+      "label": "FX2 Button 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1712,
+        "y": 55,
+        "w": 23,
+        "h": 18
+      }
+    },
+    {
+      "id": "fx2_btn2",
+      "label": "FX2 Button 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1795,
+        "y": 56,
+        "w": 24,
+        "h": 20
+      }
+    },
+    {
+      "id": "fx2_btn3",
+      "label": "FX2 Button 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1863,
+        "y": 55,
+        "w": 22,
+        "h": 18
+      }
+    },
+    {
+      "id": "fx3_drywet",
+      "label": "FX3 Dry/Wet",
+      "deck": "FX",
+      "shape": "circle",
+      "box": {
+        "x": 135,
+        "y": 85,
+        "w": 23,
+        "h": 23
+      }
+    },
+    {
+      "id": "fx3_knob1",
+      "label": "FX3 Knob 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 179,
+        "y": 78,
+        "w": 42,
+        "h": 16
+      }
+    },
+    {
+      "id": "fx3_knob2",
+      "label": "FX3 Knob 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 251,
+        "y": 76,
+        "w": 46,
+        "h": 18
+      }
+    },
+    {
+      "id": "fx3_knob3",
+      "label": "FX3 Knob 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 332,
+        "y": 75,
+        "w": 43,
+        "h": 19
+      }
+    },
+    {
+      "id": "fx3_on",
+      "label": "FX3 On",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 157,
+        "y": 105,
+        "w": 18,
+        "h": 16
+      }
+    },
+    {
+      "id": "fx3_btn1",
+      "label": "FX3 Button 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 223,
+        "y": 96,
+        "w": 18,
+        "h": 14
+      }
+    },
+    {
+      "id": "fx3_btn2",
+      "label": "FX3 Button 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 300,
+        "y": 95,
+        "w": 17,
+        "h": 15
+      }
+    },
+    {
+      "id": "fx3_btn3",
+      "label": "FX3 Button 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 384,
+        "y": 96,
+        "w": 15,
+        "h": 15
+      }
+    },
+    {
+      "id": "fx4_drywet",
+      "label": "FX4 Dry/Wet",
+      "deck": "FX",
+      "shape": "circle",
+      "box": {
+        "x": 1632,
+        "y": 85,
+        "w": 22,
+        "h": 22
+      }
+    },
+    {
+      "id": "fx4_knob1",
+      "label": "FX4 Knob 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1676,
+        "y": 79,
+        "w": 43,
+        "h": 15
+      }
+    },
+    {
+      "id": "fx4_knob2",
+      "label": "FX4 Knob 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1748,
+        "y": 78,
+        "w": 45,
+        "h": 17
+      }
+    },
+    {
+      "id": "fx4_knob3",
+      "label": "FX4 Knob 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1828,
+        "y": 77,
+        "w": 51,
+        "h": 19
+      }
+    },
+    {
+      "id": "fx4_on",
+      "label": "FX4 On",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1657,
+        "y": 105,
+        "w": 16,
+        "h": 14
+      }
+    },
+    {
+      "id": "fx4_btn1",
+      "label": "FX4 Button 1",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1721,
+        "y": 95,
+        "w": 18,
+        "h": 16
+      }
+    },
+    {
+      "id": "fx4_btn2",
+      "label": "FX4 Button 2",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1795,
+        "y": 96,
+        "w": 18,
+        "h": 16
+      }
+    },
+    {
+      "id": "fx4_btn3",
+      "label": "FX4 Button 3",
+      "deck": "FX",
+      "shape": "rect",
+      "box": {
+        "x": 1876,
+        "y": 96,
+        "w": 14,
+        "h": 15
+      }
+    },
+    {
+      "id": "deck_a_play",
+      "label": "Play",
+      "deck": "A",
+      "shape": "rect",
+      "box": {
+        "x": 10,
+        "y": 356,
+        "w": 67,
+        "h": 31
+      }
+    },
+    {
+      "id": "deck_a_cue",
+      "label": "Cue",
+      "deck": "A",
+      "shape": "rect",
+      "box": {
+        "x": 78,
+        "y": 358,
+        "w": 38,
+        "h": 28
+      }
+    },
+    {
+      "id": "deck_a_sync",
+      "label": "Sync",
+      "deck": "A",
+      "shape": "rect",
+      "box": {
+        "x": 13,
+        "y": 187,
+        "w": 60,
+        "h": 29
+      }
+    },
+    {
+      "id": "deck_a_loop",
+      "label": "Loop On",
+      "deck": "A",
+      "shape": "rect",
+      "box": {
+        "x": 729,
+        "y": 357,
+        "w": 51,
+        "h": 29
+      }
+    },
+    {
+      "id": "deck_a_loopsize",
+      "label": "Loop Size",
+      "deck": "A",
+      "shape": "rect",
+      "box": {
+        "x": 286,
+        "y": 361,
+        "w": 325,
+        "h": 25
+      }
+    },
+    {
+      "id": "deck_b_play",
+      "label": "Play",
+      "deck": "B",
+      "shape": "rect",
+      "box": {
+        "x": 1093,
+        "y": 354,
+        "w": 66,
+        "h": 36
+      }
+    },
+    {
+      "id": "deck_b_cue",
+      "label": "Cue",
+      "deck": "B",
+      "shape": "rect",
+      "box": {
+        "x": 1162,
+        "y": 355,
+        "w": 39,
+        "h": 32
+      }
+    },
+    {
+      "id": "deck_b_sync",
+      "label": "Sync",
+      "deck": "B",
+      "shape": "rect",
+      "box": {
+        "x": 1099,
+        "y": 189,
+        "w": 64,
+        "h": 28
+      }
+    },
+    {
+      "id": "deck_b_loop",
+      "label": "Loop On",
+      "deck": "B",
+      "shape": "rect",
+      "box": {
+        "x": 1814,
+        "y": 357,
+        "w": 47,
+        "h": 29
+      }
+    },
+    {
+      "id": "deck_b_loopsize",
+      "label": "Loop Size",
+      "deck": "B",
+      "shape": "rect",
+      "box": {
+        "x": 1370,
+        "y": 360,
+        "w": 319,
+        "h": 27
+      }
+    },
+    {
+      "id": "deck_c_play",
+      "label": "Play",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 15,
+        "y": 574,
+        "w": 59,
+        "h": 33
+      }
+    },
+    {
+      "id": "deck_c_cue",
+      "label": "Cue",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 75,
+        "y": 575,
+        "w": 44,
+        "h": 32
+      }
+    },
+    {
+      "id": "deck_c_sync",
+      "label": "Sync",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 17,
+        "y": 481,
+        "w": 60,
+        "h": 28
+      }
+    },
+    {
+      "id": "deck_c_loop",
+      "label": "Loop On",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 730,
+        "y": 574,
+        "w": 48,
+        "h": 29
+      }
+    },
+    {
+      "id": "deck_c_loopsize",
+      "label": "Loop Size",
+      "deck": "C",
+      "shape": "rect",
+      "box": {
+        "x": 289,
+        "y": 576,
+        "w": 334,
+        "h": 26
+      }
+    },
+    {
+      "id": "deck_d_play",
+      "label": "Play",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1101,
+        "y": 576,
+        "w": 51,
+        "h": 29
+      }
+    },
+    {
+      "id": "deck_d_cue",
+      "label": "Cue",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1152,
+        "y": 577,
+        "w": 56,
+        "h": 26
+      }
+    },
+    {
+      "id": "deck_d_sync",
+      "label": "Sync",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1099,
+        "y": 481,
+        "w": 61,
+        "h": 25
+      }
+    },
+    {
+      "id": "deck_d_loop",
+      "label": "Loop On",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1815,
+        "y": 575,
+        "w": 48,
+        "h": 28
+      }
+    },
+    {
+      "id": "deck_d_loopsize",
+      "label": "Loop Size",
+      "deck": "D",
+      "shape": "rect",
+      "box": {
+        "x": 1370,
+        "y": 576,
+        "w": 329,
+        "h": 28
       }
     }
   ]

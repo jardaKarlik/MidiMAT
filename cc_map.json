@@ -1,7 +1,908 @@
 {
   "port_hint": "loopMIDI",
   "page_buttons": [],
-  "entries": [],
+  "entries": [
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 1,
+      "label": "Deck A · EQ High",
+      "deck": "A",
+      "widget": "z1_eq_hi_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 2,
+      "label": "Deck A · EQ Mid",
+      "deck": "A",
+      "widget": "z1_eq_mid_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 3,
+      "label": "Deck A · EQ Low",
+      "deck": "A",
+      "widget": "z1_eq_lo_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 4,
+      "label": "Deck A · Filter",
+      "deck": "A",
+      "widget": "z1_fltr_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 6,
+      "label": "Deck A · Volume",
+      "deck": "A",
+      "widget": "z1_fader_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 9,
+      "label": "Deck B · EQ High",
+      "deck": "B",
+      "widget": "z1_eq_hi_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 10,
+      "label": "Deck B · EQ Mid",
+      "deck": "B",
+      "widget": "z1_eq_mid_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 11,
+      "label": "Deck B · EQ Low",
+      "deck": "B",
+      "widget": "z1_eq_lo_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 12,
+      "label": "Deck B · Filter",
+      "deck": "B",
+      "widget": "z1_fltr_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 14,
+      "label": "Deck B · Volume",
+      "deck": "B",
+      "widget": "z1_fader_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 17,
+      "label": "Crossfader",
+      "deck": "AB",
+      "widget": "z1_xfade"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 5,
+      "label": "Deck A · Gain",
+      "deck": "A",
+      "widget": "z1_gain_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 7,
+      "label": "Deck A · Headphone Cue",
+      "deck": "A",
+      "widget": "z1_cue_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 8,
+      "label": "Deck A · Filter On",
+      "deck": "A",
+      "widget": "z1_mfx_on_a"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 13,
+      "label": "Deck B · Gain",
+      "deck": "B",
+      "widget": "z1_gain_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 15,
+      "label": "Deck B · Headphone Cue",
+      "deck": "B",
+      "widget": "z1_cue_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 16,
+      "label": "Deck B · Filter On",
+      "deck": "B",
+      "widget": "z1_mfx_on_b"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 18,
+      "label": "Cue Volume",
+      "deck": "AB",
+      "widget": "z1_cue_vol"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 19,
+      "label": "Master Volume",
+      "deck": "AB",
+      "widget": "z1_main"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 20,
+      "label": "Cue Mix",
+      "deck": "AB",
+      "widget": "z1_cue_mix"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 21,
+      "label": "Mixer FX",
+      "deck": "AB",
+      "widget": "z1_mfx_sel"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 22,
+      "label": "Deck C · EQ High",
+      "deck": "C",
+      "widget": "z1_eq_hi_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 23,
+      "label": "Deck C · EQ Mid",
+      "deck": "C",
+      "widget": "z1_eq_mid_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 24,
+      "label": "Deck C · EQ Low",
+      "deck": "C",
+      "widget": "z1_eq_lo_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 25,
+      "label": "Deck C · Filter",
+      "deck": "C",
+      "widget": "z1_fltr_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 26,
+      "label": "Deck C · Gain",
+      "deck": "C",
+      "widget": "z1_gain_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 27,
+      "label": "Deck C · Volume",
+      "deck": "C",
+      "widget": "z1_fader_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 28,
+      "label": "Deck C · Headphone Cue",
+      "deck": "C",
+      "widget": "z1_cue_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 29,
+      "label": "Deck C · Filter On",
+      "deck": "C",
+      "widget": "z1_mfx_on_c"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 30,
+      "label": "Deck D · EQ High",
+      "deck": "D",
+      "widget": "z1_eq_hi_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 31,
+      "label": "Deck D · EQ Mid",
+      "deck": "D",
+      "widget": "z1_eq_mid_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 32,
+      "label": "Deck D · EQ Low",
+      "deck": "D",
+      "widget": "z1_eq_lo_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 33,
+      "label": "Deck D · Filter",
+      "deck": "D",
+      "widget": "z1_fltr_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 34,
+      "label": "Deck D · Gain",
+      "deck": "D",
+      "widget": "z1_gain_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 35,
+      "label": "Deck D · Volume",
+      "deck": "D",
+      "widget": "z1_fader_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 36,
+      "label": "Deck D · Headphone Cue",
+      "deck": "D",
+      "widget": "z1_cue_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 37,
+      "label": "Deck D · Filter On",
+      "deck": "D",
+      "widget": "z1_mfx_on_d"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 38,
+      "label": "FX1 Dry/Wet",
+      "deck": "FX",
+      "widget": "fx1_drywet"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 39,
+      "label": "FX1 Knob 1",
+      "deck": "FX",
+      "widget": "fx1_knob1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 40,
+      "label": "FX1 Knob 2",
+      "deck": "FX",
+      "widget": "fx1_knob2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 41,
+      "label": "FX1 Knob 3",
+      "deck": "FX",
+      "widget": "fx1_knob3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 42,
+      "label": "FX1 On",
+      "deck": "FX",
+      "widget": "fx1_on"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 43,
+      "label": "FX1 Button 1",
+      "deck": "FX",
+      "widget": "fx1_btn1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 44,
+      "label": "FX1 Button 2",
+      "deck": "FX",
+      "widget": "fx1_btn2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 45,
+      "label": "FX1 Button 3",
+      "deck": "FX",
+      "widget": "fx1_btn3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 46,
+      "label": "FX2 Dry/Wet",
+      "deck": "FX",
+      "widget": "fx2_drywet"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 47,
+      "label": "FX2 Knob 1",
+      "deck": "FX",
+      "widget": "fx2_knob1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 48,
+      "label": "FX2 Knob 2",
+      "deck": "FX",
+      "widget": "fx2_knob2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 49,
+      "label": "FX2 Knob 3",
+      "deck": "FX",
+      "widget": "fx2_knob3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 50,
+      "label": "FX2 On",
+      "deck": "FX",
+      "widget": "fx2_on"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 51,
+      "label": "FX2 Button 1",
+      "deck": "FX",
+      "widget": "fx2_btn1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 52,
+      "label": "FX2 Button 2",
+      "deck": "FX",
+      "widget": "fx2_btn2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 53,
+      "label": "FX2 Button 3",
+      "deck": "FX",
+      "widget": "fx2_btn3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 54,
+      "label": "FX3 Dry/Wet",
+      "deck": "FX",
+      "widget": "fx3_drywet"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 55,
+      "label": "FX3 Knob 1",
+      "deck": "FX",
+      "widget": "fx3_knob1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 56,
+      "label": "FX3 Knob 2",
+      "deck": "FX",
+      "widget": "fx3_knob2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 57,
+      "label": "FX3 Knob 3",
+      "deck": "FX",
+      "widget": "fx3_knob3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 58,
+      "label": "FX3 On",
+      "deck": "FX",
+      "widget": "fx3_on"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 59,
+      "label": "FX3 Button 1",
+      "deck": "FX",
+      "widget": "fx3_btn1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 60,
+      "label": "FX3 Button 2",
+      "deck": "FX",
+      "widget": "fx3_btn2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 61,
+      "label": "FX3 Button 3",
+      "deck": "FX",
+      "widget": "fx3_btn3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 62,
+      "label": "FX4 Dry/Wet",
+      "deck": "FX",
+      "widget": "fx4_drywet"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 63,
+      "label": "FX4 Knob 1",
+      "deck": "FX",
+      "widget": "fx4_knob1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 64,
+      "label": "FX4 Knob 2",
+      "deck": "FX",
+      "widget": "fx4_knob2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 65,
+      "label": "FX4 Knob 3",
+      "deck": "FX",
+      "widget": "fx4_knob3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 66,
+      "label": "FX4 On",
+      "deck": "FX",
+      "widget": "fx4_on"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 67,
+      "label": "FX4 Button 1",
+      "deck": "FX",
+      "widget": "fx4_btn1"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 68,
+      "label": "FX4 Button 2",
+      "deck": "FX",
+      "widget": "fx4_btn2"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 69,
+      "label": "FX4 Button 3",
+      "deck": "FX",
+      "widget": "fx4_btn3"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 70,
+      "label": "Deck A · Play",
+      "deck": "A",
+      "widget": "deck_a_play"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 71,
+      "label": "Deck A · Cue",
+      "deck": "A",
+      "widget": "deck_a_cue"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 72,
+      "label": "Deck A · Sync",
+      "deck": "A",
+      "widget": "deck_a_sync"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 73,
+      "label": "Deck A · Loop On",
+      "deck": "A",
+      "widget": "deck_a_loop"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 74,
+      "label": "Deck A · Loop Size",
+      "deck": "A",
+      "widget": "deck_a_loopsize"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 75,
+      "label": "Deck B · Play",
+      "deck": "B",
+      "widget": "deck_b_play"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 76,
+      "label": "Deck B · Cue",
+      "deck": "B",
+      "widget": "deck_b_cue"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 77,
+      "label": "Deck B · Sync",
+      "deck": "B",
+      "widget": "deck_b_sync"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 78,
+      "label": "Deck B · Loop On",
+      "deck": "B",
+      "widget": "deck_b_loop"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 79,
+      "label": "Deck B · Loop Size",
+      "deck": "B",
+      "widget": "deck_b_loopsize"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 80,
+      "label": "Deck C · Play",
+      "deck": "C",
+      "widget": "deck_c_play"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 81,
+      "label": "Deck C · Cue",
+      "deck": "C",
+      "widget": "deck_c_cue"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 82,
+      "label": "Deck C · Sync",
+      "deck": "C",
+      "widget": "deck_c_sync"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 83,
+      "label": "Deck C · Loop On",
+      "deck": "C",
+      "widget": "deck_c_loop"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 84,
+      "label": "Deck C · Loop Size",
+      "deck": "C",
+      "widget": "deck_c_loopsize"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 85,
+      "label": "Deck D · Play",
+      "deck": "D",
+      "widget": "deck_d_play"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 86,
+      "label": "Deck D · Cue",
+      "deck": "D",
+      "widget": "deck_d_cue"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 87,
+      "label": "Deck D · Sync",
+      "deck": "D",
+      "widget": "deck_d_sync"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 88,
+      "label": "Deck D · Loop On",
+      "deck": "D",
+      "widget": "deck_d_loop"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 89,
+      "label": "Deck D · Loop Size",
+      "deck": "D",
+      "widget": "deck_d_loopsize"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 90,
+      "label": "Browse",
+      "deck": "AB",
+      "widget": "br_list_scroll"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 91,
+      "label": "Browse Folders",
+      "deck": "AB",
+      "widget": "br_tree_scroll"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 92,
+      "label": "Open Folder",
+      "deck": "AB",
+      "widget": "br_tree_expand"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 93,
+      "label": "Deck A · Load Track",
+      "deck": "A",
+      "widget": "deck_a_load"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 94,
+      "label": "Deck B · Load Track",
+      "deck": "B",
+      "widget": "deck_b_load"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 95,
+      "label": "Deck C · Load Track",
+      "deck": "C",
+      "widget": "deck_c_load"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 96,
+      "label": "Deck D · Load Track",
+      "deck": "D",
+      "widget": "deck_d_load"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 97,
+      "label": "Deck A · Track Loaded",
+      "deck": "A",
+      "widget": "deck_a_loaded"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 98,
+      "label": "Deck B · Track Loaded",
+      "deck": "B",
+      "widget": "deck_b_loaded"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 99,
+      "label": "Deck C · Track Loaded",
+      "deck": "C",
+      "widget": "deck_c_loaded"
+    },
+    {
+      "port": "loopMIDI",
+      "channel": 0,
+      "kind": "cc",
+      "number": 100,
+      "label": "Deck D · Track Loaded",
+      "deck": "D",
+      "widget": "deck_d_loaded"
+    }
+  ],
   "_howto": "1) .venv\\Scripts\\python -m sidecar.midi_tap watch --port X1   2) move a control; the [port] prefix tells WHICH unit sent it (you own TWO X1 MK3s -> two ports)   3) add {\"port\": \"X1 MK3 2\", \"channel\": 0, \"kind\": \"cc\", \"number\": 21, \"label\": \"FX1 · Dry/Wet\", \"deck\": \"FX\", \"widget\": \"fx1_drywet\"}. 'port' is an optional substring: include it to scope an entry to ONE unit (recommended for identical controllers), omit it to match any unit. widget must match an id in layout.json (else HUD-only). Optional \"page\": \"fx\" scopes by X1 page; register switches in page_buttons.",
   "_ports_note": "This machine shows: 'TRAKTOR X1 MK3 2' (X1 unit 1), '2 - TRAKTOR X1 MK3 3' (X1 unit 2), 'Traktor Z1 MK2 1' (mixer; also 'Traktor Kontrol F1 - 1 0'). Identify which physical unit is which by wiggling one control while watch runs.",
   "_z1_widgets_ready": [

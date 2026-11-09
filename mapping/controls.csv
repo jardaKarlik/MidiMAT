@@ -1,12 +1,101 @@
 id,physical,traktor_out,channel,cc,label,deck,shape,x,y,w,h,verified
-z1_eq_hi_a,Z1 LEFT HI knob,Mixer > EQ > High Adjust [Deck A],,,EQ High,A,circle,892,135,46,46,
-z1_eq_mid_a,Z1 LEFT MID knob,Mixer > EQ > Mid Adjust [Deck A],,,EQ Mid,A,circle,892,193,46,46,
-z1_eq_lo_a,Z1 LEFT LOW knob,Mixer > EQ > Low Adjust [Deck A],,,EQ Low,A,circle,892,255,46,46,
-z1_fltr_a,Z1 LEFT FILTER knob,Mixer > Mixer FX Adjust [Deck A],,,Filter,A,circle,837,217,46,46,
-z1_fader_a,Z1 LEFT channel fader,Mixer > Volume Adjust [Deck A],,,Volume,A,rect,875,300,24,150,
-z1_eq_hi_b,Z1 RIGHT HI knob,Mixer > EQ > High Adjust [Deck B],,,EQ High,B,circle,957,135,46,46,
-z1_eq_mid_b,Z1 RIGHT MID knob,Mixer > EQ > Mid Adjust [Deck B],,,EQ Mid,B,circle,957,193,46,46,
-z1_eq_lo_b,Z1 RIGHT LOW knob,Mixer > EQ > Low Adjust [Deck B],,,EQ Low,B,circle,957,255,46,46,
-z1_fltr_b,Z1 RIGHT FILTER knob,Mixer > Mixer FX Adjust [Deck B],,,Filter,B,circle,1029,217,46,46,
-z1_fader_b,Z1 RIGHT channel fader,Mixer > Volume Adjust [Deck B],,,Volume,B,rect,1008,300,24,150,
-z1_xfade,Z1 crossfader,Mixer > X-Fader > Position [Global (no deck)],,,Crossfader,AB,rect,847,573,220,26,
+z1_eq_hi_a,Z1 LEFT HI knob,Mixer > EQ > High Adjust [Deck A],1,1,EQ High,A,circle,909,123,40,40,2026-11-05
+z1_eq_mid_a,Z1 LEFT MID knob,Mixer > EQ > Mid Adjust [Deck A],1,2,EQ Mid,A,circle,907,176,46,46,2026-11-05
+z1_eq_lo_a,Z1 LEFT LOW knob,Mixer > EQ > Low Adjust [Deck A],1,3,EQ Low,A,circle,908,231,44,44,2026-11-05
+z1_fltr_a,Z1 LEFT FILTER knob,Mixer > Mixer FX Adjust [Deck A],1,4,Filter,A,circle,848,179,34,34,2026-11-05
+z1_fader_a,Z1 LEFT channel fader,Mixer > Volume Adjust [Deck A],1,6,Volume,A,rect,916,293,28,143,2026-11-05
+z1_eq_hi_b,Z1 RIGHT HI knob,Mixer > EQ > High Adjust [Deck B],1,9,EQ High,B,circle,963,121,46,46,2026-11-05
+z1_eq_mid_b,Z1 RIGHT MID knob,Mixer > EQ > Mid Adjust [Deck B],1,10,EQ Mid,B,circle,965,177,42,42,2026-11-05
+z1_eq_lo_b,Z1 RIGHT LOW knob,Mixer > EQ > Low Adjust [Deck B],1,11,EQ Low,B,circle,965,232,41,41,2026-11-05
+z1_fltr_b,Z1 RIGHT FILTER knob,Mixer > Mixer FX Adjust [Deck B],1,12,Filter,B,circle,1035,178,37,37,2026-11-05
+z1_fader_b,Z1 RIGHT channel fader,Mixer > Volume Adjust [Deck B],1,14,Volume,B,rect,976,292,31,142,2026-11-05
+z1_xfade,Z1 crossfader,Mixer > X-Fader > Position [Global (no deck)],1,17,Crossfader,AB,rect,881,612,157,42,2026-11-05
+z1_gain_a,Z1 LEFT GAIN knob (skip if your Z1 has none),Mixer > Gain Adjust [Deck A],1,5,Gain,A,circle,842,121,47,47,2026-11-05
+z1_cue_a,Z1 LEFT CUE (headphone) button,Mixer > Monitor Cue On [Deck A],1,7,Headphone Cue,A,rect,849,359,33,28,2026-11-05
+z1_mfx_on_a,Z1 LEFT FX/FILTER ON button (skip if none),Mixer > Mixer FX On [Deck A],1,8,Filter On,A,rect,883,213,16,16,2026-11-05
+z1_gain_b,Z1 RIGHT GAIN knob (skip if your Z1 has none),Mixer > Gain Adjust [Deck B],1,13,Gain,B,circle,1032,123,43,43,2026-11-05
+z1_cue_b,Z1 RIGHT CUE (headphone) button,Mixer > Monitor Cue On [Deck B],1,15,Headphone Cue,B,rect,1037,359,32,28,2026-11-05
+z1_mfx_on_b,Z1 RIGHT FX/FILTER ON button (skip if none),Mixer > Mixer FX On [Deck B],1,16,Filter On,B,rect,1069,214,14,16,2026-11-05
+z1_cue_vol,Z1 CUE VOL knob (skip if none),Mixer > Monitor Volume Adjust [Global (no deck)],1,18,Cue Volume,AB,circle,1843,612,38,38,2026-11-05
+z1_main,Z1 MAIN/MASTER knob (skip if none),Mixer > Master Volume Adjust [Global (no deck)],1,19,Master Volume,AB,circle,1034,39,40,40,2026-11-05
+z1_cue_mix,Z1 CUE MIX knob (skip if none),Mixer > Monitor Mix Adjust [Global (no deck)],1,20,Cue Mix,AB,circle,1778,612,38,38,2026-11-05
+z1_mfx_sel,Z1 center FX select buttons 1-4 (+ the wide button below them),Mixer > Mixer FX Selector [Deck A],1,21,Mixer FX,AB,rect,835,213,45,17,2026-11-05
+z1_eq_hi_c,Z1 LEFT HI knob (Z1 deck switch ON: LEFT channel = Deck C),Mixer > EQ > High Adjust [Deck C],1,22,EQ High,C,circle,908,122,42,42,2026-11-05
+z1_eq_mid_c,Z1 LEFT MID knob (Z1 deck switch ON: LEFT channel = Deck C),Mixer > EQ > Mid Adjust [Deck C],1,23,EQ Mid,C,circle,908,177,44,44,2026-11-05
+z1_eq_lo_c,Z1 LEFT LOW knob (Z1 deck switch ON: LEFT channel = Deck C),Mixer > EQ > Low Adjust [Deck C],1,24,EQ Low,C,circle,909,231,44,44,2026-11-05
+z1_fltr_c,Z1 LEFT FILTER knob (Z1 deck switch ON: LEFT channel = Deck C),Mixer > Mixer FX Adjust [Deck C],1,25,Filter,C,circle,849,508,32,32,2026-11-05
+z1_gain_c,Z1 LEFT GAIN knob (skip if your Z1 has none) (Z1 deck switch ON: LEFT channel = Deck C),Mixer > Gain Adjust [Deck C],1,26,Gain,C,circle,848,453,33,33,2026-11-05
+z1_fader_c,Z1 LEFT channel fader (Z1 deck switch ON: LEFT channel = Deck C),Mixer > Volume Adjust [Deck C],1,27,Volume,C,rect,788,484,37,59,2026-11-05
+z1_cue_c,Z1 LEFT CUE (headphone) button (Z1 deck switch ON: LEFT channel = Deck C),Mixer > Monitor Cue On [Deck C],1,28,Headphone Cue,C,rect,788,576,27,25,2026-11-05
+z1_mfx_on_c,Z1 LEFT round FX on/off button (Z1 deck switch ON: LEFT channel = Deck C),Mixer > Mixer FX On [Deck C],1,29,Filter On,C,rect,876,540,20,13,2026-11-05
+z1_eq_hi_d,Z1 RIGHT HI knob (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > EQ > High Adjust [Deck D],1,30,EQ High,D,circle,964,122,43,43,2026-11-05
+z1_eq_mid_d,Z1 RIGHT MID knob (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > EQ > Mid Adjust [Deck D],1,31,EQ Mid,D,circle,963,176,45,45,2026-11-05
+z1_eq_lo_d,Z1 RIGHT LOW knob (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > EQ > Low Adjust [Deck D],1,32,EQ Low,D,circle,963,230,45,45,2026-11-05
+z1_fltr_d,Z1 RIGHT FILTER knob (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > Mixer FX Adjust [Deck D],1,33,Filter,D,circle,1039,509,30,30,2026-11-05
+z1_gain_d,Z1 RIGHT GAIN knob (skip if your Z1 has none) (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > Gain Adjust [Deck D],1,34,Gain,D,circle,1037,452,34,34,2026-11-05
+z1_fader_d,Z1 RIGHT channel fader (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > Volume Adjust [Deck D],1,35,Volume,D,rect,1869,487,40,57,2026-11-05
+z1_cue_d,Z1 RIGHT CUE (headphone) button (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > Monitor Cue On [Deck D],1,36,Headphone Cue,D,rect,1873,578,37,23,2026-11-05
+z1_mfx_on_d,Z1 RIGHT round FX on/off button (Z1 deck switch ON: RIGHT channel = Deck D),Mixer > Mixer FX On [Deck D],1,37,Filter On,D,rect,1069,538,21,17,2026-11-05
+fx1_drywet,X1 FX section driving FX Unit 1 DRY/WET knob (knob 1),FX Unit > Dry/Wet Adjust [FX Unit 1],1,38,FX1 Dry/Wet,FX,circle,133,43,26,26,2026-11-05
+fx1_knob1,X1 FX section driving FX Unit 1 knob 2,FX Unit > Knob 1 [FX Unit 1],1,39,FX1 Knob 1,FX,rect,176,36,47,17,2026-11-05
+fx1_knob2,X1 FX section driving FX Unit 1 knob 3,FX Unit > Knob 2 [FX Unit 1],1,40,FX1 Knob 2,FX,rect,252,35,45,18,2026-11-05
+fx1_knob3,X1 FX section driving FX Unit 1 knob 4,FX Unit > Knob 3 [FX Unit 1],1,41,FX1 Knob 3,FX,rect,327,36,45,17,2026-11-05
+fx1_on,X1 FX section driving FX Unit 1 FX ON button (button 1),FX Unit > Unit On [FX Unit 1],1,42,FX1 On,FX,rect,153,64,21,17,2026-11-05
+fx1_btn1,X1 FX section driving FX Unit 1 button 2,FX Unit > Button 1 [FX Unit 1],1,43,FX1 Button 1,FX,rect,218,53,19,20,2026-11-05
+fx1_btn2,X1 FX section driving FX Unit 1 button 3,FX Unit > Button 2 [FX Unit 1],1,44,FX1 Button 2,FX,rect,296,54,19,18,2026-11-05
+fx1_btn3,X1 FX section driving FX Unit 1 button 4,FX Unit > Button 3 [FX Unit 1],1,45,FX1 Button 3,FX,rect,371,53,21,19,2026-11-05
+fx2_drywet,X1 FX section driving FX Unit 2 DRY/WET knob (knob 1),FX Unit > Dry/Wet Adjust [FX Unit 2],1,46,FX2 Dry/Wet,FX,circle,1629,42,27,27,2026-11-05
+fx2_knob1,X1 FX section driving FX Unit 2 knob 2,FX Unit > Knob 1 [FX Unit 2],1,47,FX2 Knob 1,FX,rect,1676,37,39,16,2026-11-05
+fx2_knob2,X1 FX section driving FX Unit 2 knob 3,FX Unit > Knob 2 [FX Unit 2],1,48,FX2 Knob 2,FX,rect,1750,37,42,17,2026-11-05
+fx2_knob3,X1 FX section driving FX Unit 2 knob 4,FX Unit > Knob 3 [FX Unit 2],1,49,FX2 Knob 3,FX,rect,1827,36,42,17,2026-11-05
+fx2_on,X1 FX section driving FX Unit 2 FX ON button (button 1),FX Unit > Unit On [FX Unit 2],1,50,FX2 On,FX,rect,1655,65,19,14,2026-11-05
+fx2_btn1,X1 FX section driving FX Unit 2 button 2,FX Unit > Button 1 [FX Unit 2],1,51,FX2 Button 1,FX,rect,1712,55,23,18,2026-11-05
+fx2_btn2,X1 FX section driving FX Unit 2 button 3,FX Unit > Button 2 [FX Unit 2],1,52,FX2 Button 2,FX,rect,1795,56,24,20,2026-11-05
+fx2_btn3,X1 FX section driving FX Unit 2 button 4,FX Unit > Button 3 [FX Unit 2],1,53,FX2 Button 3,FX,rect,1863,55,22,18,2026-11-05
+fx3_drywet,X1 FX section driving FX Unit 3 DRY/WET knob (knob 1),FX Unit > Dry/Wet Adjust [FX Unit 3],1,54,FX3 Dry/Wet,FX,circle,135,85,23,23,2026-11-05
+fx3_knob1,X1 FX section driving FX Unit 3 knob 2,FX Unit > Knob 1 [FX Unit 3],1,55,FX3 Knob 1,FX,rect,179,78,42,16,2026-11-05
+fx3_knob2,X1 FX section driving FX Unit 3 knob 3,FX Unit > Knob 2 [FX Unit 3],1,56,FX3 Knob 2,FX,rect,251,76,46,18,2026-11-05
+fx3_knob3,X1 FX section driving FX Unit 3 knob 4,FX Unit > Knob 3 [FX Unit 3],1,57,FX3 Knob 3,FX,rect,332,75,43,19,2026-11-05
+fx3_on,X1 FX section driving FX Unit 3 FX ON button (button 1),FX Unit > Unit On [FX Unit 3],1,58,FX3 On,FX,rect,157,105,18,16,2026-11-05
+fx3_btn1,X1 FX section driving FX Unit 3 button 2,FX Unit > Button 1 [FX Unit 3],1,59,FX3 Button 1,FX,rect,223,96,18,14,2026-11-05
+fx3_btn2,X1 FX section driving FX Unit 3 button 3,FX Unit > Button 2 [FX Unit 3],1,60,FX3 Button 2,FX,rect,300,95,17,15,2026-11-05
+fx3_btn3,X1 FX section driving FX Unit 3 button 4,FX Unit > Button 3 [FX Unit 3],1,61,FX3 Button 3,FX,rect,384,96,15,15,2026-11-05
+fx4_drywet,X1 FX section driving FX Unit 4 DRY/WET knob (knob 1),FX Unit > Dry/Wet Adjust [FX Unit 4],1,62,FX4 Dry/Wet,FX,circle,1632,85,22,22,2026-11-05
+fx4_knob1,X1 FX section driving FX Unit 4 knob 2,FX Unit > Knob 1 [FX Unit 4],1,63,FX4 Knob 1,FX,rect,1676,79,43,15,2026-11-05
+fx4_knob2,X1 FX section driving FX Unit 4 knob 3,FX Unit > Knob 2 [FX Unit 4],1,64,FX4 Knob 2,FX,rect,1748,78,45,17,2026-11-05
+fx4_knob3,X1 FX section driving FX Unit 4 knob 4,FX Unit > Knob 3 [FX Unit 4],1,65,FX4 Knob 3,FX,rect,1828,77,51,19,2026-11-05
+fx4_on,X1 FX section driving FX Unit 4 FX ON button (button 1),FX Unit > Unit On [FX Unit 4],1,66,FX4 On,FX,rect,1657,105,16,14,2026-11-05
+fx4_btn1,X1 FX section driving FX Unit 4 button 2,FX Unit > Button 1 [FX Unit 4],1,67,FX4 Button 1,FX,rect,1721,95,18,16,2026-11-05
+fx4_btn2,X1 FX section driving FX Unit 4 button 3,FX Unit > Button 2 [FX Unit 4],1,68,FX4 Button 2,FX,rect,1795,96,18,16,2026-11-05
+fx4_btn3,X1 FX section driving FX Unit 4 button 4,FX Unit > Button 3 [FX Unit 4],1,69,FX4 Button 3,FX,rect,1876,96,14,15,2026-11-05
+deck_a_play,Deck A PLAY button,Deck Common > Play/Pause [Deck A],1,70,Play,A,rect,10,356,67,31,2026-11-05
+deck_a_cue,Deck A CUE button,Deck Common > Cue [Deck A],1,71,Cue,A,rect,78,358,38,28,2026-11-05
+deck_a_sync,Deck A SYNC button,Deck Common > Sync On [Deck A],1,72,Sync,A,rect,13,187,60,29,2026-11-05
+deck_a_loop,Deck A loop ACTIVE (push loop encoder),Deck Common > Loop > Loop Active On [Deck A],1,73,Loop On,A,rect,729,357,51,29,2026-11-05
+deck_a_loopsize,Deck A loop SIZE (turn loop encoder),Deck Common > Loop > Loop Size Selector [Deck A],1,74,Loop Size,A,rect,286,361,325,25,2026-11-05
+deck_b_play,Deck B PLAY button,Deck Common > Play/Pause [Deck B],1,75,Play,B,rect,1093,354,66,36,2026-11-05
+deck_b_cue,Deck B CUE button,Deck Common > Cue [Deck B],1,76,Cue,B,rect,1162,355,39,32,2026-11-05
+deck_b_sync,Deck B SYNC button,Deck Common > Sync On [Deck B],1,77,Sync,B,rect,1099,189,64,28,2026-11-05
+deck_b_loop,Deck B loop ACTIVE (push loop encoder),Deck Common > Loop > Loop Active On [Deck B],1,78,Loop On,B,rect,1814,357,47,29,2026-11-05
+deck_b_loopsize,Deck B loop SIZE (turn loop encoder),Deck Common > Loop > Loop Size Selector [Deck B],1,79,Loop Size,B,rect,1370,360,319,27,2026-11-05
+deck_c_play,Deck C PLAY button,Deck Common > Play/Pause [Deck C],1,80,Play,C,rect,15,574,59,33,2026-11-05
+deck_c_cue,Deck C CUE button,Deck Common > Cue [Deck C],1,81,Cue,C,rect,75,575,44,32,2026-11-05
+deck_c_sync,Deck C SYNC button,Deck Common > Sync On [Deck C],1,82,Sync,C,rect,17,481,60,28,2026-11-05
+deck_c_loop,Deck C loop ACTIVE (push loop encoder),Deck Common > Loop > Loop Active On [Deck C],1,83,Loop On,C,rect,730,574,48,29,2026-11-05
+deck_c_loopsize,Deck C loop SIZE (turn loop encoder),Deck Common > Loop > Loop Size Selector [Deck C],1,84,Loop Size,C,rect,289,576,334,26,2026-11-05
+deck_d_play,Deck D PLAY button,Deck Common > Play/Pause [Deck D],1,85,Play,D,rect,1101,576,51,29,2026-11-05
+deck_d_cue,Deck D CUE button,Deck Common > Cue [Deck D],1,86,Cue,D,rect,1152,577,56,26,2026-11-05
+deck_d_sync,Deck D SYNC button,Deck Common > Sync On [Deck D],1,87,Sync,D,rect,1099,481,61,25,2026-11-05
+deck_d_loop,Deck D loop ACTIVE (push loop encoder),Deck Common > Loop > Loop Active On [Deck D],1,88,Loop On,D,rect,1815,575,48,28,2026-11-05
+deck_d_loopsize,Deck D loop SIZE (turn loop encoder),Deck Common > Loop > Loop Size Selector [Deck D],1,89,Loop Size,D,rect,1370,576,329,28,2026-11-05
+br_list_scroll,X1 BROWSE encoder - turn (track list up/down),Browser > List > Select Up/Down [Global (no deck)],1,90,Browse,AB,hud,,,,,2026-11-05
+br_tree_scroll,X1 BROWSE encoder - SHIFT+turn (folder tree up/down; skip if unused),Browser > Tree > Select Up/Down [Global (no deck)],1,91,Browse Folders,AB,hud,,,,,2026-11-05
+br_tree_expand,X1 BROWSE encoder - push / SHIFT+push (open/close folder; skip if unused),Browser > Tree > Select Expand/Collapse [Global (no deck)],1,92,Open Folder,AB,hud,,,,,2026-11-05
+deck_a_load,LOAD button / encoder push for Deck A,Deck Common > Load Selected [Deck A],1,93,Load Track,A,rect,,,,,2026-11-05
+deck_b_load,LOAD button / encoder push for Deck B,Deck Common > Load Selected [Deck B],1,94,Load Track,B,rect,,,,,2026-11-05
+deck_c_load,LOAD button / encoder push for Deck C,Deck Common > Load Selected [Deck C],1,95,Load Track,C,rect,,,,,2026-11-05
+deck_d_load,LOAD button / encoder push for Deck D,Deck Common > Load Selected [Deck D],1,96,Load Track,D,rect,,,,,2026-11-05
+deck_a_loaded,"load any track into Deck A (any way: X1, mouse...)",Deck Common > Deck is Loaded [Deck A],1,97,Track Loaded,A,hud,,,,,2026-11-05
+deck_b_loaded,"load any track into Deck B (any way: X1, mouse...)",Deck Common > Deck is Loaded [Deck B],1,98,Track Loaded,B,hud,,,,,2026-11-05
+deck_c_loaded,"load any track into Deck C (any way: X1, mouse...)",Deck Common > Deck is Loaded [Deck C],1,99,Track Loaded,C,hud,,,,,2026-11-05
+deck_d_loaded,"load any track into Deck D (any way: X1, mouse...)",Deck Common > Deck is Loaded [Deck D],1,100,Track Loaded,D,hud,,,,,2026-11-05
