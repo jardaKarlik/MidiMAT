@@ -95,16 +95,30 @@ public sealed partial class MainWindow : Window
     /// <summary>Send the current dependency + server snapshot to the UI (<c>deps:status</c>).</summary>
     private void PostDepsStatus()
     {
-        var found = DependencyChecker.CheckAll().ToDictionary(d => d.Name, d => d.Found);
+        var checks = DependencyChecker.CheckAll().ToDictionary(d => d.Name, d => d);
+        bool Found(string name) => checks.TryGetValue(name, out var d) && d.Found;
+        string Detail(string name) => checks.TryGetValue(name, out var d) ? d.Detail : "";
+
+        var launch = SidecarManager.ResolveSidecarLaunch(_config);
 
         _ipc?.PostToWeb(IpcMessageTypes.DepsStatus, new
         {
-            loopMidi = found.GetValueOrDefault(DependencyChecker.LoopMidi),
-            traktor = found.GetValueOrDefault(DependencyChecker.Traktor),
-            obs = found.GetValueOrDefault(DependencyChecker.Obs),
+            loopMidi = Found(DependencyChecker.LoopMidi),
+            traktor = Found(DependencyChecker.Traktor),
+            obs = Found(DependencyChecker.Obs),
             // "python" = the sidecar runtime is reachable (bundled EXE, or the dev venv).
-            python = _sidecar is not null && SidecarManager.ResolveSidecarLaunch(_config) is not null,
+            python = launch is not null,
             server = _sidecar?.State == SidecarState.Running,
+            // Real, machine-specific values so the UI never shows invented paths.
+            detail = new
+            {
+                loopMidi = Detail(DependencyChecker.LoopMidi),
+                traktor = Detail(DependencyChecker.Traktor),
+                obs = Detail(DependencyChecker.Obs),
+                runtime = launch?.Description ?? "not found",
+                server = ConfigStore.ConfigFilePath,
+                port = _config.Paths.LoopmidiPort,
+            },
         });
     }
 

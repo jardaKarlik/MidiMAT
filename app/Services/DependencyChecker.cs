@@ -104,42 +104,16 @@ public static class DependencyChecker
     // ---------------------------------------------------------------------
     private static DependencyStatus CheckTraktor()
     {
-        var candidates = new List<string>();
-
-        var myDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        if (!string.IsNullOrEmpty(myDocs))
-        {
-            candidates.Add(myDocs);
-        }
-
-        var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        if (!string.IsNullOrEmpty(profile))
-        {
-            candidates.Add(Path.Combine(profile, "Documents"));
-            candidates.Add(Path.Combine(profile, "OneDrive", "Documents"));
-        }
-
-        foreach (var docs in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            var ni = Path.Combine(docs, "Native Instruments");
-            if (!Directory.Exists(ni))
-            {
-                continue;
-            }
-
-            // Match "Traktor <version>" folders containing the settings file.
-            foreach (var traktorDir in Directory.EnumerateDirectories(ni, "Traktor*"))
-            {
-                var tsi = Path.Combine(traktorDir, "Traktor Settings.tsi");
-                if (File.Exists(tsi))
-                {
-                    return new DependencyStatus(Traktor, true, tsi);
-                }
-            }
-        }
-
-        return new DependencyStatus(Traktor, false,
-            @"not found (no " + @"\Native Instruments\Traktor*\Traktor Settings.tsi)");
+        // Single source of truth: TraktorConfig picks the NEWEST settings file across
+        // every "Traktor <version>" folder. Delegating here keeps the dependency card
+        // and the wizard's writer pointed at the same file — picking the "first" folder
+        // (as this probe used to) reported an ancient Traktor 3.x install on a machine
+        // that runs 4.5.
+        var tsi = TraktorConfig.FindSettingsFile();
+        return tsi is not null
+            ? new DependencyStatus(Traktor, true, tsi)
+            : new DependencyStatus(Traktor, false,
+                @"not found (no \Native Instruments\Traktor*\Traktor Settings.tsi)");
     }
 
     // ---------------------------------------------------------------------

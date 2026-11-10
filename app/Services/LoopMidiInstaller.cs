@@ -42,16 +42,19 @@ public static class LoopMidiInstaller
     //       here. Until InstallerSha256 is non-empty, InstallAsync() refuses to run and
     //       returns a clear "not-implemented" result — it never pretends to install.
     //
-    // Vendor page (always confirm against this before pinning):
+    // Vendor page (re-confirm against this before each release):
     //   https://www.tobias-erichsen.de/software/loopmidi.html
     //
-    // The URL below is the vendor's 2020/09 direct download. Treat it as a PLACEHOLDER:
-    // verify it still resolves and is the current build before release. DESIGN_APP.md §4
-    // says "do NOT redistribute the installer inside our EXE; download at setup time".
+    // DESIGN_APP.md §4: do NOT redistribute the installer inside our EXE — download it
+    // at setup time so the user gets the official, current build under their own EULA.
+    // Pinned 2026-11-10 to the vendor's loopMIDI 1.0.16.27 build (the URL is versioned
+    // and stable). The archive contains a single `loopMIDISetup.exe`.
     private const string InstallerUrl =
-        "https://www.tobias-erichsen.de/wp-content/uploads/2020/09/loopMIDISetup.zip";
+        "https://www.tobias-erichsen.de/wp-content/uploads/2020/01/loopMIDISetup_1_0_16_27.zip";
 
-    private const string InstallerSha256 = ""; // TODO: paste the SHA-256 of the verified download
+    /// <summary>SHA-256 of the pinned archive — verified before anything is executed.</summary>
+    private const string InstallerSha256 =
+        "975399eb76e2c5a1d553ecd8975ab361261ccab8fd9412b8060b19877cb4e0d5";
     // ------------------------------------------------------------------
 
     private const string TobiasKey = @"SOFTWARE\Tobias Erichsen";
@@ -68,8 +71,8 @@ public static class LoopMidiInstaller
     public static IReadOnlyList<string> SilentInstallArguments { get; } =
         new[] { "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" };
 
-    /// <summary>Expected installer size shown in the wizard (DESIGN_APP.md §4).</summary>
-    public const long ExpectedDownloadBytes = 2L * 1024 * 1024; // ~2 MB
+    /// <summary>Nominal installer size (the pinned 1.0.16.27 archive is ~7.9 MB).</summary>
+    public const long ExpectedDownloadBytes = 7884702L;
 
     /// <summary>How long <see cref="EnsurePort"/> waits for a restarted loopMIDI to publish the port.</summary>
     private static readonly TimeSpan PortPollTimeout = TimeSpan.FromSeconds(10);

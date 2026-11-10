@@ -40,6 +40,27 @@ export interface DepsStatus {
   obs: boolean;
   python: boolean;
   server: boolean;
+  /**
+   * Real, machine-specific values supplied by the shell (paths, versions, the
+   * sidecar launch description). Optional so the UI still works if an older
+   * shell doesn't send it — but never invent these client-side.
+   */
+  detail?: DepsStatusDetail | undefined;
+}
+
+export interface DepsStatusDetail {
+  /** e.g. "installed · v1.0.16.27" */
+  loopMidi?: string;
+  /** the real `Traktor Settings.tsi` path when found */
+  traktor?: string;
+  /** the OBS install path / registry detail */
+  obs?: string;
+  /** how the sidecar runtime resolves (bundled exe, or python + server.py) */
+  runtime?: string;
+  /** the MidiMAT config file path */
+  server?: string;
+  /** the virtual MIDI port name (e.g. "MidiMAT") */
+  port?: string;
 }
 
 export type LogLevel = "info" | "warn" | "error" | "debug";

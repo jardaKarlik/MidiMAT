@@ -8,6 +8,8 @@ export interface SetupItem {
   pulsing?: boolean | undefined;
   state: string;
   detail: string;
+  /** Label for the bottom line — e.g. "Config file", "Install path", "Port". */
+  pathLabel: string;
   path: string;
 }
 
@@ -28,7 +30,7 @@ export function SetupCard({ item }: { item: SetupItem }) {
         <span className="text-muted-foreground">{item.detail}</span>
       </p>
       <div className="mt-5 border-t pt-4">
-        <p className="text-xs text-muted-foreground">Config file</p>
+        <p className="text-xs text-muted-foreground">{item.pathLabel}</p>
         <p className="mt-1 font-mono text-xs leading-relaxed break-all text-muted-foreground">{item.path}</p>
       </div>
     </article>
