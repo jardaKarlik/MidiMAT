@@ -43,6 +43,7 @@ public sealed partial class MainWindow : Window
         // turn "close" into "hide to tray" without losing the sidecar.
         _appWindow = AppWindow;
         _appWindow.Closing += OnAppWindowClosing;
+        SetWindowIcon();
 
         // Do not await here (ctor cannot be async); the Loaded handler does the async init.
         WebView.Loaded += WebView2_Loaded;
@@ -422,6 +423,47 @@ public sealed partial class MainWindow : Window
         // Single-file publish keeps the icon inside the EXE rather than on disk.
         var exe = Environment.ProcessPath;
         return exe is null ? null : System.Drawing.Icon.ExtractAssociatedIcon(exe);
+    }
+
+    /// <summary>
+    /// Give the window its own taskbar / Alt+Tab icon.
+    ///
+    /// WinUI 3 registers its window class <b>without</b> an icon, so
+    /// <c>&lt;ApplicationIcon&gt;</c> — which only populates the EXE's resources — never
+    /// reaches the taskbar and the window falls back to Windows' generic app glyph.
+    /// <see cref="AppWindow.SetIcon(string)"/> is the supported fix. (The tray icon is a
+    /// separate path: it loads <c>Assets\MidiMAT.ico</c> itself.)
+    /// </summary>
+    private void SetWindowIcon()
+    {
+        try
+        {
+            var icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "MidiMAT.ico");
+
+            if (!File.Exists(icoPath))
+            {
+                // Single-file publish may not have extracted it — fall back to the icon
+                // embedded in our own executable by <ApplicationIcon>.
+                var exe = Environment.ProcessPath;
+                var embedded = exe is null ? null : System.Drawing.Icon.ExtractAssociatedIcon(exe);
+                if (embedded is null)
+                {
+                    LogToFile("window icon: no .ico on disk and none embedded in the EXE");
+                    return;
+                }
+
+                icoPath = Path.Combine(Path.GetTempPath(), "MidiMAT-window.ico");
+                using var stream = File.Create(icoPath);
+                embedded.Save(stream);
+            }
+
+            AppWindow.SetIcon(icoPath);
+            LogToFile($"window icon: set from {icoPath}");
+        }
+        catch (Exception ex)
+        {
+            LogToFile($"window icon failed: {ex}");
+        }
     }
 
     private void DisposeTray()
