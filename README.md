@@ -83,8 +83,6 @@ the per-frame path. That's what keeps the overlay responsive during a set.
 
 ## Getting started
 
-![MidiMAT — Setup Summary](docs/images/01-setup-summary.png)
-
 Launch MidiMAT and the **Setup Wizard** opens on first run. It checks your machine and
 walks you through each piece — nothing to type, and nothing gets installed without your
 say-so.
