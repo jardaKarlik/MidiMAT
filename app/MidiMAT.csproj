@@ -37,4 +37,18 @@
     <Content Include="Resources\ui\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!--
+    The packaged Python sidecar (built by build/midimat-server.spec) travels with the
+    app as `sidecar/`. On first run SidecarExtractor copies it to
+    %LOCALAPPDATA%\MidiMAT\sidecar\ — the path SidecarManager checks first — so the
+    installed app never depends on a repo checkout. Absent until you run PyInstaller,
+    so the condition keeps a plain `dotnet build` working.
+  -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\build\dist\midimat-server')">
+    <Content Include="..\build\dist\midimat-server\**\*"
+             Link="sidecar\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

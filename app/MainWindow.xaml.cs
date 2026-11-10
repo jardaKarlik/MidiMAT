@@ -70,6 +70,11 @@ public sealed partial class MainWindow : Window
         // ---- services --------------------------------------------------------
         _config = ConfigStore.Load();
 
+        // Install the bundled sidecar into %LOCALAPPDATA% on first run, before the
+        // supervisor resolves a launch target (it prefers that location).
+        var extract = SidecarExtractor.EnsureInstalled();
+        LogToFile($"sidecar bundle: ok={extract.Ok} copied={extract.Copied} {extract.Detail}");
+
         _sidecar = new SidecarManager(_config);
         _sidecar.LogLine += OnSidecarLog;
         _sidecar.StateChanged += (_, _) => PostDepsStatus();
