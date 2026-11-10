@@ -22,9 +22,31 @@ import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
+import sys
+
 import websockets
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+def _resolve_root() -> pathlib.Path:
+    """Where the sidecar's data lives (overlay/, layout.json, cc_map.json, …).
+
+    - Running from source  -> the repo root (parent of sidecar/).
+    - Running frozen        -> next to the built executable when the data is shipped
+      there (preferred, and what build/midimat-server.spec arranges), otherwise
+      PyInstaller's bundle dir (`sys._MEIPASS`, e.g. the `_internal` folder).
+    """
+    if getattr(sys, "frozen", False):
+        exe_dir = pathlib.Path(sys.executable).resolve().parent
+        if (exe_dir / "layout.json").exists():
+            return exe_dir
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            return pathlib.Path(meipass)
+        return exe_dir
+    return pathlib.Path(__file__).resolve().parent.parent
+
+
+ROOT = _resolve_root()
 
 
 def load_layout() -> dict:
@@ -32,8 +54,6 @@ def load_layout() -> dict:
 
 
 LAYOUT = load_layout()
-
-import sys  # noqa: E402
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

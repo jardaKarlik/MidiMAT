@@ -346,17 +346,39 @@ public sealed class SidecarManager : IDisposable
     }
 
     /// <summary>
-    /// Walk up from the running EXE looking for the repo root (identified by
-    /// <c>sidecar\server.py</c>). Returns null when the app is not running from a checkout.
+    /// Walk up looking for the repo root (identified by <c>sidecar\server.py</c>).
+    /// Returns null when the app is not running from a checkout.
+    ///
+    /// NOTE: a single-file published app extracts its payload to a temp folder, so
+    /// <see cref="AppContext.BaseDirectory"/> can point there — <see cref="Environment.ProcessPath"/>
+    /// is the real executable and must be tried first (this cost a debugging session:
+    /// the published app reported "target=&lt;not found&gt;" while the dev build worked).
     /// </summary>
     private static string? FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        for (var i = 0; i < 12 && dir is not null; i++, dir = dir.Parent)
+        var starts = new List<string>();
+
+        var exePath = Environment.ProcessPath;
+        if (!string.IsNullOrEmpty(exePath))
         {
-            if (File.Exists(Path.Combine(dir.FullName, "sidecar", "server.py")))
+            var exeDir = Path.GetDirectoryName(exePath);
+            if (!string.IsNullOrEmpty(exeDir))
             {
-                return dir.FullName;
+                starts.Add(exeDir);
+            }
+        }
+
+        starts.Add(AppContext.BaseDirectory);
+
+        foreach (var start in starts.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var dir = new DirectoryInfo(start);
+            for (var i = 0; i < 12 && dir is not null; i++, dir = dir.Parent)
+            {
+                if (File.Exists(Path.Combine(dir.FullName, "sidecar", "server.py")))
+                {
+                    return dir.FullName;
+                }
             }
         }
 

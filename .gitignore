@@ -61,6 +61,13 @@ scripts/derive_idx_formula.py
 app/bin/
 app/obj/
 
+# --- Packaging output (B) ----------------------------------------------------
+# PyInstaller sidecar bundle + the published single-file EXE. Regenerate with
+# build/midimat-server.spec and the dotnet publish command in DESIGN_APP.md §7.
+build/dist/
+build/work/
+dist/
+
 # --- React management UI (ui/) ------------------------------------------------
 ui/node_modules/
 ui/dist/

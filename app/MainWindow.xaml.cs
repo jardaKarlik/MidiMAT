@@ -84,9 +84,19 @@ public sealed partial class MainWindow : Window
         {
             // Push persisted config + the first dependency snapshot, then start the sidecar
             // if the user allowed it. (The page decides which screen is active.)
-            _ipc?.PostToWeb(IpcMessageTypes.ConfigLoaded, _config);
-            PostDepsStatus();
-            _sidecar.StartIfAutoStartEnabled();
+            try
+            {
+                _ipc?.PostToWeb(IpcMessageTypes.ConfigLoaded, _config);
+                PostDepsStatus();
+                var started = _sidecar.StartIfAutoStartEnabled();
+                LogToFile($"navigation: config+deps posted; autoStart={started}; "
+                          + $"sidecarState={_sidecar.State}; target={_sidecar.ExecutablePath}");
+            }
+            catch (Exception ex)
+            {
+                // A throw here would silently skip every later step (deps, sidecar start).
+                LogToFile($"navigation FAILED: {ex}");
+            }
         };
 
         core.Navigate("https://midimat.local/index.html");
@@ -297,4 +307,24 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Payload of the <c>setup:start</c> message (mirrors ui/src/lib/ipc.ts).</summary>
     private sealed record SetupStartPayload(int Step);
+
+    /// <summary>
+    /// Minimal file log at %LOCALAPPDATA%\MidiMAT\logs\app.log. The shell is a
+    /// single-file WinExe with no console, so without this a startup exception
+    /// (which would silently skip the dependency post AND the sidecar start) is invisible.
+    /// </summary>
+    internal static void LogToFile(string message)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(ConfigStore.AppDataDirectory, "logs"));
+            File.AppendAllText(
+                Path.Combine(ConfigStore.AppDataDirectory, "logs", "app.log"),
+                $"{DateTimeOffset.Now:O} {message}{Environment.NewLine}");
+        }
+        catch
+        {
+            // Logging must never take the app down.
+        }
+    }
 }
