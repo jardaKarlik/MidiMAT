@@ -116,4 +116,4 @@ trivial. `obs-websocket` remains a candidate for *scene switching* on X1 page ch
 ## Stack
 
 Python 3.14 · `websockets` (now) · `mido`/`python-rtmidi`, `opencv-python`, `mss`, `lxml`
-(phases 1–2) · HTML/JS canvas overlay · OBS Browser Source · `gh`-managed private GitHub repo.
+(phases 1–2) · HTML/JS canvas overlay · OBS Browser Source · `gh`-managed public GitHub repo.

@@ -96,7 +96,9 @@ app/
 │       ├── index.html
 │       ├── midimat-logo.svg
 │       └── assets/…
-└── Assets/                     # (empty today — app icon still to come)
+└── Assets/
+    ├── MidiMAT.ico             # Tray icon + <ApplicationIcon> (16–256)
+    └── MidiMAT-icon-1024.png   # 1024² master raster the .ico is built from
 ```
 
 The PyInstaller sidecar bundle travels in the publish output as `sidecar/` next to
@@ -192,11 +194,17 @@ ui/
 - REST API (`/api/controls`, `/api/suggest`, `/api/refit`)
 - MIDI tap + NHL tap + mapping resolver
 
-**Additions:**
-- `--managed` flag: tells sidecar it's running under the desktop app
-  - Logs go to a file the C# shell reads and displays in the Status screen
-  - JSON status messages on stdout for the C# shell to parse
-- Health endpoint: `GET /api/health` returns `{status: "ok", uptime, midi_ports, ...}`
+**Additions — what actually shipped (the sidecar itself is unchanged):**
+
+- `server.py` accepts only `--http-port`, `--ws-port`, `--no-demo`, `--midi`,
+  `--midi-ports`, `--nhl`, `--config`. The shell streams its **stdout/stderr line by line**
+  to the UI as `server:log`; the level is parsed out of the text because Python's `logging`
+  writes INFO to stderr too ("came from stderr" ≠ "is an error").
+- Health/status is **pushed, not polled**: the shell builds a `deps:status` snapshot from
+  `DependencyChecker` + `SidecarManager.State` and posts it over IPC whenever either changes.
+- **Not implemented:** a `--managed` flag and a `GET /api/health` endpoint. Both were planned
+  here; passing `--managed` today would make argparse exit, which is exactly why
+  `SidecarManager.PassManagedFlag` is hard-coded `false` (§4, step 4).
 
 **PyInstaller spec (new):**
 ```
@@ -251,19 +259,19 @@ The React UI talks to the Python sidecar exactly as the existing overlay does:
 - `POST http://127.0.0.1:8080/api/suggest` — AI placement
 - `POST http://127.0.0.1:8080/api/refit` — detect & re-fit
 - `WS ws://127.0.0.1:8787` — live MIDI events (for SignalCapture in Map Device)
-- `GET http://127.0.0.1:8080/api/health` — server health check (new)
+- ~~`GET http://127.0.0.1:8080/api/health`~~ — **not implemented**; health is pushed to the UI as `deps:status` instead (§3.3)
 
 ### 3.3 C# -> Python (stdout parsing + process management)
 
 C# spawns the sidecar and reads its stdout:
 ```
-[SidecarManager] spawns: midimat-server.exe --managed --midi --nhl
+[SidecarManager] spawns: midimat-server.exe --http-port 8080 --ws-port 8787 --midi [--nhl] [--no-demo]
 [SidecarManager] reads stdout line by line:
   → 14:32:01.234 INFO  sidecar.server | overlay: http://127.0.0.1:8080/...
   → 14:32:01.456 INFO  sidecar.server | WebSocket ready on ws://127.0.0.1:8787
   → 14:32:05.789 INFO  sidecar.midi_tap | midi| connected: TRAKTOR X1 MK3
 [SidecarManager] forwards to React as server:log messages
-[SidecarManager] polls GET /api/health every 5s for status
+[SidecarManager] pushes deps:status whenever StateChanged fires (no HTTP health polling)
 ```
 
 ## 4. Setup Wizard Flow
@@ -573,6 +581,7 @@ Versions actually installed / pinned in this build:
 | Layer | Technology | Version | Rationale |
 |-------|-----------|---------|-----------|
 | Desktop shell | Windows App SDK (WinUI 3) | 2.6.5 | Native Windows; unpackaged, runtime self-contained |
+| Tray / taskbar icon | H.NotifyIcon.WinUI | 2.4.1 | Pure WinUI `TaskbarIcon` (no WinForms `NotifyIcon`); menu via `ContextFlyout` |
 | Runtime | .NET | 10 (`net10.0-windows10.0.26100.0`) | Single-file publish |
 | Web runtime | WebView2 SDK | 1.0.4314.35 | Evergreen Chromium; `CoreWebView2` APIs |
 | Management UI | React | 19 | — |
@@ -601,7 +610,7 @@ What stays vs what changes:
 
 | Component | Current | After | Changes |
 |-----------|---------|-------|---------|
-| `sidecar/server.py` | Standalone | Bundled in EXE | Add `--managed` flag, `/api/health` endpoint |
+| `sidecar/server.py` | Standalone | Bundled in EXE | **No changes** — only bundled (`None` in the csproj). `--managed` / `/api/health` were planned but never added (§3) |
 | `overlay/index.html` | Standalone HTML | Served by sidecar | **No changes** |
 | `overlay/edit.html` | Standalone HTML | Served by sidecar, embedded in Editor screen via WebView2 iframe | **No changes** |
 | `overlay/overlay.js` | Static JS | Static JS | **No changes** |
