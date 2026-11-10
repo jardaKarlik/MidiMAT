@@ -1,0 +1,13 @@
+# Optional: better control detection for the editor.
+#
+# The editor's "🎯 Detect & re-fit" and "✨ Suggest" work out of the box using the
+# built-in OpenCV detector (opencv-python, already in requirements.txt). Installing
+# this file adds a trained YOLO detector, which is more accurate on Traktor's UI.
+#
+#   .venv\Scripts\python.exe -m pip install -r requirements-vision.txt
+#
+# ⚠️ LICENSING: Ultralytics is AGPL-3.0. MidiMAT itself is MIT and does NOT bundle
+#    Ultralytics or any model weights — you install it yourself. If you build it into
+#    your own distribution, the AGPL applies to that combined work. See
+#    ACKNOWLEDGEMENTS.md. (Pulls PyTorch, ~1-2 GB.)
+ultralytics>=8.3

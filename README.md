@@ -65,6 +65,8 @@ the per-frame path. That's what keeps the overlay responsive during a set.
   Controller Manager and verifies the signal actually arrives.
 - **Works with NI hardware** — X1 MK3, Z1 MK2, F1 (and any class-compliant MIDI
   controller via a virtual MIDI port).
+- **Optional AI placement** — the built-in OpenCV detector needs nothing extra; an
+  optional trained YOLO detector is more accurate. See `requirements-vision.txt`.
 
 ## Requirements
 
