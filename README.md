@@ -81,9 +81,50 @@ the per-frame path. That's what keeps the overlay responsive during a set.
 > **macOS / Linux:** not supported yet. The overlay and sidecar are portable, but the
 > virtual-MIDI bridge differs per platform.
 
-## Quick start (from source)
+## Getting started
 
-> A one-click Windows installer is in development. Until then, run from source.
+![MidiMAT — Setup Summary](docs/images/01-setup-summary.png)
+
+Launch MidiMAT and the **Setup Wizard** opens on first run. It checks your machine and
+walks you through each piece — nothing to type, and nothing gets installed without your
+say-so.
+
+![The MidiMAT Setup Wizard](docs/images/06-setup-wizard.png)
+
+1. **loopMIDI** — detected automatically; if it's missing, the wizard downloads the
+   official installer from the vendor (Windows shows a UAC prompt) and creates a virtual
+   port named `MidiMAT`.
+2. **Traktor** — finds your `Traktor Settings.tsi` and points the `Generic MIDI`
+   out-port at `MidiMAT`. It edits the file surgically: every other controller and
+   mapping is left byte-for-byte alone, a timestamped backup is made first, and it
+   refuses to touch the file while Traktor is running.
+3. **Server** — starts MidiMAT's local server. No Python to install; the runtime ships
+   inside the app.
+4. **OBS / Streamlabs** — detects your setup and shows the Browser Source settings.
+5. **Save** — remembers the result, so later launches skip straight to the app.
+
+Then place your widgets in the **Editor**: drop in a screenshot of Traktor, drag a box
+onto each control, and hit Save. If you later move or resize the Traktor window,
+`🎯 Detect & re-fit` moves everything back onto the controls.
+
+![The MidiMAT Editor](docs/images/03-editor.png)
+
+The sidebar covers the rest:
+
+| Screen | What it's for |
+|---|---|
+| **Setup Summary** | where each piece stands — re-run setup here if something drifts |
+| **Status** | server health, a live MIDI log, and the demo / native-HID / auto-start switches |
+| **Editor** | place the glow boxes on your Traktor layout |
+| **Map New Device** | learn a controller that isn't mapped yet |
+| **Help** | everything in one screen |
+
+Finally, add the overlay to your stream — see
+[Streaming setup](#streaming-setup--obs-studio-or-streamlabs-desktop) below.
+
+### Running from source (developers)
+
+Until the desktop installer is published, contributors can run the stack directly:
 
 ```powershell
 git clone https://github.com/jardaKarlik/MidiMAT.git
@@ -97,35 +138,18 @@ cd MidiMAT
 - **Editor** — <http://127.0.0.1:8080/overlay/edit.html>
 - **WebSocket** — `ws://127.0.0.1:8787`
 
-Want to see it without any hardware? Open the overlay with demo mode:
+No hardware? Open the overlay in demo mode — it animates on its own:
 
 ```
 http://127.0.0.1:8080/overlay/index.html?demo=1
 ```
 
-### Wiring up Traktor
+To learn a controller from the command line (what the Setup Wizard automates for you):
 
-1. In Traktor, add a **Generic MIDI** device with its **Out-Port** set to your
-   loopMIDI port.
-2. Run the guided wizard — it tells you exactly which out-mapping to add for each
-   control and confirms the signal is arriving:
-
-   ```powershell
-   .\.venv\Scripts\python.exe scripts\setup_wizard.py --profile z1
-   ```
-
-3. Place the widgets:
-
-   ```powershell
-   # open the editor, drop in a Traktor screenshot, drag the boxes, Save
-   # (or let detection do it: 🎯 Detect & re-fit)
-   ```
-
-4. Start with real MIDI instead of the demo generator:
-
-   ```powershell
-   .\scripts\run.ps1 --midi --no-demo
-   ```
+```powershell
+.\.venv\Scripts\python.exe scripts\setup_wizard.py --profile z1
+.\scripts\run.ps1 --midi --no-demo
+```
 
 ### Streaming setup — OBS Studio **or** Streamlabs Desktop
 
@@ -208,6 +232,6 @@ MidiMAT is **not affiliated with, endorsed by, or sponsored by Native Instrument
 
 <div align="center">
 
-If MidiMAT helps your stream, consider [buying me a coffee](https://www.buymeacoffee.com/) ☕
+If MidiMAT helps your stream, consider [buying me a coffee](https://www.buymeacoffee.com/lee_cz) ☕
 
 </div>

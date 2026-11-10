@@ -31,7 +31,7 @@ export const ENDPOINTS = {
 } as const;
 
 /** Placeholder donate link (real campaign pending). */
-export const COFFEE_URL = "https://www.buymeacoffee.com/";
+export const COFFEE_URL = "https://www.buymeacoffee.com/lee_cz";
 
 /** Upstream repository (DESIGN_APP.md §12). */
 export const REPO_URL = "https://github.com/jardaKarlik/MidiMAT";
