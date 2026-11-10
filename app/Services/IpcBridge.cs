@@ -16,7 +16,7 @@ public static class IpcMessageTypes
     public const string SetupComplete = "setup:complete";   // { step }
     public const string ServerRestart = "server:restart";   // {}
     public const string ServerStop = "server:stop";         // {}
-    public const string ConfigSave = "config:save";         // { skipChecks: bool }
+    public const string ConfigSave = "config:save";         // { skipChecks?, demoMode?, nhlMode?, autoStart? }
 
     // ---- C#  ->  React -------------------------------------------------------
     public const string DepsStatus = "deps:status";         // { loopMidi, traktor, obs, python, server }

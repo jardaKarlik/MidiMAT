@@ -108,7 +108,14 @@ export interface OutboundPayloads {
   [HostMessage.SetupComplete]: { step: number };
   [HostMessage.ServerRestart]: Record<string, never>;
   [HostMessage.ServerStop]: Record<string, never>;
-  [HostMessage.ConfigSave]: { skipChecks: boolean };
+  // Every field is optional: callers send only what changed. The wizard still
+  // sends `{ skipChecks }`; the Status switches send demoMode/nhlMode/autoStart.
+  [HostMessage.ConfigSave]: {
+    skipChecks?: boolean;
+    demoMode?: boolean;
+    nhlMode?: boolean;
+    autoStart?: boolean;
+  };
 }
 
 /** Payloads for every C# → React message. */

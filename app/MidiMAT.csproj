@@ -7,6 +7,9 @@
     <RootNamespace>MidiMAT</RootNamespace>
     <AssemblyName>MidiMAT</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- EXE/shortcut icon + the source for the tray icon. Generated from
+         ui/public/midimat-logo.svg; see DESIGN_APP.md for how it is rebuilt. -->
+    <ApplicationIcon>Assets\MidiMAT.ico</ApplicationIcon>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
@@ -27,6 +30,7 @@
 
   <!-- Pinned package versions. See README.md for rationale. -->
   <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.4.1" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
@@ -38,17 +42,33 @@
   </ItemGroup>
 
   <!--
+    The tray icon is loaded at runtime from disk (Assets\MidiMAT.ico), so it has to
+    sit next to the EXE as well. `None` (not `Content`) keeps it out of resources.pri —
+    same reasoning as the sidecar payload below. The same file also feeds
+    <ApplicationIcon>, which is what Explorer/shortcuts show.
+  -->
+  <ItemGroup>
+    <None Update="Assets\MidiMAT.ico"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!--
     The packaged Python sidecar (built by build/midimat-server.spec) travels with the
     app as `sidecar/`. On first run SidecarExtractor copies it to
     %LOCALAPPDATA%\MidiMAT\sidecar\ — the path SidecarManager checks first — so the
     installed app never depends on a repo checkout. Absent until you run PyInstaller,
     so the condition keeps a plain `dotnet build` working.
   -->
+  <!--
+    `None` (not `Content`): the PyInstaller payload only needs to be copied next to
+    the EXE — it must NOT be indexed into resources.pri. Its native modules carry
+    Python wheel-tag names (e.g. `hid.cp314-win_amd64.pyd`) that makepri misreads
+    as resource qualifiers, which produced a flood of PRI249 "Invalid qualifier"
+    warnings. `None` + CopyTo* still lands every file under `sidecar\`.
+  -->
   <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\build\dist\midimat-server')">
-    <Content Include="..\build\dist\midimat-server\**\*"
-             Link="sidecar\%(RecursiveDir)%(Filename)%(Extension)"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\build\dist\midimat-server\**\*" Link="sidecar\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

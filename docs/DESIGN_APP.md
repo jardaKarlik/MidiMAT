@@ -1,7 +1,7 @@
 # MidiMAT — Desktop Application Architecture
 
-> **Status:** DRAFT — awaiting review before implementation
-> **Target:** Single-file Windows EXE, ~35MB, zero prerequisites
+> **Status:** IMPLEMENTED — describes the shipped shell, UI and build pipeline
+> **Target:** Single-file Windows EXE (`MidiMAT.exe`, ~148 MB), no separate installer
 
 ## 1. Overview
 
@@ -9,83 +9,99 @@ MidiMAT ships as a single `MidiMAT.exe` that:
 1. Detects and auto-installs missing dependencies (loopMIDI, Traktor config)
 2. Runs the Python sidecar (MIDI → WebSocket → overlay server)
 3. Presents a modern management UI (setup wizard, status, editor, device mapper, help)
-4. Sits in the system tray when minimized
+4. Sits in the system tray when the window is closed — closing hides to the tray (so the
+   sidecar keeps serving the OBS Browser Source) instead of exiting; login auto-start is
+   not implemented yet
 
-The EXE is a **.NET 8 single-file publish** of a **WinApp SDK (WinUI 3)** app that hosts a
-**WebView2** control rendering a **React + Tailwind** management UI. The Python sidecar is
-bundled as a **PyInstaller** executable in the app's resources and spawned as a child process.
+The EXE is a **.NET 10 single-file publish** of a **Windows App SDK (WinUI 3)** app whose
+window contains **only a WebView2** — there is no native navigation or chrome; the React app
+owns all of it. The Python sidecar is bundled as a **PyInstaller onedir** payload in the app's
+`sidecar/` folder, spawned as a child process, and installed to `%LOCALAPPDATA%` on first run.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  MidiMAT.exe  (.NET 8 / WinApp SDK / WinUI 3)                      │
+│  MidiMAT.exe  (.NET 10 / Windows App SDK / WinUI 3, single file)    │
 │                                                                     │
-│  ┌──────────────┐  ┌────────────────────────────────────────────┐   │
-│  │  XAML Shell  │  │  WebView2 (Chromium)                       │   │
-│  │              │  │                                            │   │
-│  │  • Sidebar   │  │  ┌──────────────────────────────────────┐  │   │
-│  │  • SysTray   │  │  │  React + Tailwind + Aceternity UI    │  │   │
-│  │  • Titlebar  │  │  │                                      │  │   │
-│  │  • Deps      │  │  │  Setup Summary │ Status │ Editor     │  │   │
-│  │    checker   │◄─┼──┤  Map Device    │ Help                │  │   │
-│  │              │  │  │                                      │  │   │
-│  └──────────────┘  │  └──────────────┬───────────────────────┘  │   │
-│                    │                 │ window.chrome.webMessage   │   │
-│                    └─────────────────┼────────────────────────────┘   │
-│                                      │                                │
-│  ┌───────────────────────────────────▼────────────────────────────┐   │
-│  │  Python Sidecar  (PyInstaller bundle, spawned as subprocess)   │   │
-│  │                                                                │   │
-│  │  HTTP :8080  →  overlay/index.html  (OBS browser source)       │   │
-│  │  HTTP :8080  →  overlay/edit.html   (legacy editor, kept)      │   │
-│  │  WS   :8787  →  MIDI/NHL events → overlay                     │   │
-│  │  REST :8080  →  /api/controls, /api/suggest, /api/refit       │   │
-│  │                                                                │   │
-│  │  midi_tap.py  │  nhl_tap.py  │  mapping.py  │  suggest.py     │   │
-│  └────────────────────────────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  Native shell: MainWindow.xaml is ONE <WebView2/> control.      │ │
+│  │  No native NavigationView/titlebar — the React app owns the     │ │
+│  │  sidebar, logo and routing.                                     │ │
+│  └───────────────────────────────┬────────────────────────────────┘ │
+│                                  │ window.chrome.webview (IPC)        │
+│                                  ▼                                   │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  React + Tailwind app  (virtual host https://midimat.local/)    │ │
+│  │                                                                │ │
+│  │  Sidebar:  Setup Summary │ Status │ Editor │ Map New Device    │ │
+│  │            │ Help        (+ footer: Support, Settings)          │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  Python Sidecar  (PyInstaller onedir, spawned as subprocess)    │ │
+│  │                                                                │ │
+│  │  HTTP :8080  →  overlay/index.html  (OBS browser source)       │ │
+│  │  HTTP :8080  →  overlay/edit.html   (legacy editor, kept)      │ │
+│  │  WS   :8787  →  MIDI/NHL events → overlay                      │ │
+│  │  REST :8080  →  /api/controls, /api/suggest, /api/refit        │ │
+│  └────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Why the shell is bare:** the first scaffold shipped **both** a native `NavigationView`
+> *and* a React sidebar, which rendered as a **double sidebar**. The shell was reduced to a
+> window + `WebView2` (see `app/MainWindow.xaml`), and the React app became the single owner of
+> navigation and chrome.
+
 ## 2. Component Breakdown
 
-### 2.1 WinApp SDK Shell (C# / .NET 8)
+### 2.1 Native shell (C# / .NET 10 / WinUI 3)
 
 **Responsibilities:**
-- Native window with sidebar navigation
-- System tray icon (shows server running/stopped status)
-- Dependency detection (registry, filesystem, process checks)
-- Silent loopMIDI installation
-- Python sidecar lifecycle (start, monitor, stop)
-- WebView2 ↔ C# IPC bridge (via `window.chrome.webmessage`)
+- Single native window hosting one **WebView2** — the shell owns the window plus service
+  plumbing only. It has **no native navigation/chrome**; the React app owns the sidebar, logo
+  and routing (see the note under the diagram above).
+- Dependency detection (registry + filesystem probes; no WMI)
+- loopMIDI install (artifact-gated download + SHA-256 verify) and port provisioning
+  (HKCU registry value + `loopMIDI.exe` restart)
+- Traktor out-port + out-mapping injection (surgical TSI edit; see §5.1)
+- Python sidecar lifecycle (install on first run, start, monitor, restart, stop)
+- WebView2 ↔ C# IPC bridge (via `window.chrome.webview`)
 - Application state persistence (`midimat.config.json`)
-- Auto-start on Windows login (optional, via registry)
+- **System tray icon** (`H.NotifyIcon.WinUI`, `TaskbarIcon` in `MainWindow.xaml`) —
+  close-to-tray (the sidecar must outlive the window), left-click reopens, context menu =
+  Show / Open overlay in browser / Quit. Image from `Assets\MidiMAT.ico`, generated from
+  `ui/public/midimat-logo.svg`.
+- **Not yet implemented:** auto-start on Windows login (later task)
 
 **Key files (new):**
 ```
 app/
-├── MidiMAT.csproj              # .NET 8, WinApp SDK, WebView2
+├── MidiMAT.csproj              # net10.0-windows, WinUI 3, x64, unpackaged
+├── app.manifest                # PerMonitorV2 DPI; asInvoker
 ├── App.xaml / App.xaml.cs      # Application entry point
-├── MainWindow.xaml             # Shell: sidebar + WebView2
-├── MainWindow.xaml.cs          # Sidecar lifecycle, IPC bridge
+├── MainWindow.xaml             # ONE <WebView2/> — no native chrome
+├── MainWindow.xaml.cs          # Boots WebView2, wires IPC, runs probes, supervises sidecar
 ├── Services/
-│   ├── DependencyChecker.cs    # loopMIDI, Traktor, OBS, Python detection
-│   ├── LoopMidiInstaller.cs    # Silent install loopMIDI + create port
-│   ├── TraktorConfig.cs        # Find/copy TSI, detect Traktor version
-│   ├── ObsDetector.cs          # Find OBS, generate Browser Source config
-│   ├── SidecarManager.cs       # Spawn/monitor/kill Python sidecar
-│   ├── ConfigStore.cs          # Read/write midimat.config.json
+│   ├── DependencyChecker.cs    # Registry/file probes: loopMIDI, Traktor, OBS, WebView2
+│   ├── LoopMidiInstaller.cs    # Download+verify install, provision port (HKCU), restart
+│   ├── TraktorConfig.cs        # Newest TSI finder; DDPT out-port + CMAI/DCBM injection
+│   ├── ObsDetector.cs          # Locates OBS Studio / Streamlabs; Browser Source guide
+│   ├── SidecarManager.cs       # Launch/monitor/restart the sidecar
+│   ├── SidecarExtractor.cs     # Install the bundled sidecar\ payload to %LOCALAPPDATA%
+│   ├── SetupService.cs         # Runs the six wizard steps; raises setup:progress
+│   ├── ConfigStore.cs          # Read/write midimat.config.json (atomic)
 │   └── IpcBridge.cs            # WebView2 ↔ C# message passing
 ├── Resources/
-│   ├── midimat-server.exe      # PyInstaller bundle (embedded resource)
-│   ├── loopmidi-setup.exe      # Bundled loopMIDI installer (~2MB)
-│   ├── traktor-mapping.tsi     # Bundled Traktor out-mapping
-│   └── overlay/                # Copied from repo root at build time
+│   └── ui/                     # Built React app (Vite outDir); globbed by the .csproj
 │       ├── index.html
-│       ├── overlay.js
-│       └── edit.html
-└── Assets/
-    ├── MidiMAT.ico             # App icon (logo variant B)
-    └── SplashScreen.png        # Startup splash
+│       ├── midimat-logo.svg
+│       └── assets/…
+└── Assets/                     # (empty today — app icon still to come)
 ```
+
+The PyInstaller sidecar bundle travels in the publish output as `sidecar/` next to
+`MidiMAT.exe` (see §7); `SidecarExtractor` copies it to
+`%LOCALAPPDATA%\MidiMAT\sidecar\` on first run.
 
 ### 2.2 React Management UI (in WebView2)
 
@@ -99,65 +115,73 @@ app/
 
 **Technology:**
 - React 19 + TypeScript
-- Tailwind CSS 4
-- Vite (bundler)
-- Aceternity UI components (Evervault Card, Wobble Card)
-- Framer Motion (page transitions, micro-animations)
-- Inter font (UI text) + JetBrains Mono (logs, technical values)
+- Tailwind CSS 4 (CSS-first `@theme` oklch tokens in `src/styles/globals.css`; no `tailwind.config.ts`)
+- Vite 8 (bundler; relative `base: "./"` for the WebView2 virtual host)
+- shadcn-style primitives (`components/ui/{button,switch}.tsx`, built on Radix) plus MidiMAT's
+  own `components/midimat/*` — the earlier "Aceternity UI (Evervault/Wobble Card)" plan was dropped
+- Framer Motion 14 (page transitions, micro-animations; `prefers-reduced-motion` aware)
+- lucide-react icons
+- Inter + JetBrains Mono shipped **offline** via `@fontsource/*` (imported in `main.tsx`) —
+  not a CDN and not `public/fonts/`
+- `@` → `src` import alias (declared in both `vite.config.ts` and `tsconfig.json`)
 
 **Key files (new):**
 ```
 ui/
 ├── package.json
-├── vite.config.ts
-├── tailwind.config.ts
+├── vite.config.ts              # base "./", outDir ../app/Resources/ui, "@" → src alias
+├── tsconfig.json               # "@/*" → "src/*"
 ├── index.html                  # Entry point loaded by WebView2
-├── src/
-│   ├── main.tsx                # React root
-│   ├── App.tsx                 # Router + layout (sidebar)
-│   ├── components/
-│   │   ├── layout/
-│   │   │   ├── Sidebar.tsx         # Navigation sidebar
-│   │   │   ├── TitleBar.tsx        # Custom title bar
-│   │   │   └── PageTransition.tsx  # Framer Motion wrapper
-│   │   ├── setup/
-│   │   │   ├── SetupWizard.tsx     # 6-step wizard
-│   │   │   ├── StepLoopMidi.tsx
-│   │   │   ├── StepTraktor.tsx
-│   │   │   ├── StepPython.tsx
-│   │   │   ├── StepServer.tsx
-│   │   │   ├── StepObs.tsx
-│   │   │   └── StepSave.tsx
-│   │   ├── dashboard/
-│   │   │   ├── SetupSummary.tsx    # Component status cards
-│   │   │   ├── StatusCard.tsx      # Wobble Card for server
-│   │   │   └── ComponentCard.tsx   # Evervault Card for deps
-│   │   ├── editor/
-│   │   │   ├── EditorScreen.tsx    # Wrapper around existing editor
-│   │   │   └── EditorGuide.tsx     # Screenshot + instructions
-│   │   ├── mapper/
-│   │   │   ├── MapDevice.tsx       # Device mapping wizard
-│   │   │   ├── SignalCapture.tsx   # Live MIDI signal display
-│   │   │   └── MappingSteps.tsx    # Step-by-step guide
-│   │   ├── help/
-│   │   │   └── HelpScreen.tsx      # All-in-one help
-│   │   └── ui/                     # Aceternity-inspired primitives
-│   │       ├── evervault-card.tsx
-│   │       ├── wobble-card.tsx
-│   │       ├── glowing-card.tsx
-│   │       ├── pulse-dot.tsx
-│   │       └── animated-border.tsx
-│   ├── hooks/
-│   │   ├── useIpc.ts              # C# ↔ React message bridge
-│   │   ├── useServerStatus.ts     # WebSocket to sidecar
-│   │   └── useSetupState.ts       # Setup wizard state
-│   ├── lib/
-│   │   ├── ipc.ts                 # Typed IPC protocol
-│   │   └── constants.ts           # Ports, URLs, paths
-│   └── styles/
-│       └── globals.css            # Tailwind + design tokens
-└── public/
-    └── fonts/                     # Inter + JetBrains Mono (WOFF2)
+├── public/
+│   └── midimat-logo.svg        # Approved knob-mark logo
+└── src/
+    ├── main.tsx                # React root + @fontsource imports
+    ├── App.tsx                 # Nav + host messages (deps/log/config) + page transitions
+    ├── components/
+    │   ├── layout/
+    │   │   └── PageTransition.tsx    # Framer Motion wrapper
+    │   ├── midimat/
+    │   │   ├── app-shell.tsx         # Sidebar + scrollable content shell
+    │   │   ├── app-sidebar.tsx       # 5 nav entries + footer (Support, Settings)
+    │   │   ├── midimat-logo.tsx      # Knob logo glyph + wordmark
+    │   │   ├── server-log.tsx        # Live log pane
+    │   │   ├── server-status-card.tsx# Server URL/uptime/events + buttons
+    │   │   ├── setup-card.tsx        # Component status card
+    │   │   ├── status-dot.tsx        # Status indicator
+    │   │   └── switch-row.tsx        # Toggle row (Radix Switch)
+    │   ├── setup/
+    │   │   ├── SetupWizard.tsx       # 6-step wizard (full-screen overlay)
+    │   │   ├── setup-wizard-context.tsx
+    │   │   ├── setup-step-card.tsx
+    │   │   ├── wizard-steps.ts       # Step metadata + ids
+    │   │   ├── step-status.ts
+    │   │   ├── StepLoopMidi.tsx
+    │   │   ├── StepTraktor.tsx
+    │   │   ├── StepRuntime.tsx
+    │   │   ├── StepServer.tsx
+    │   │   ├── StepObs.tsx
+    │   │   ├── StepSave.tsx
+    │   │   └── types.ts
+    │   └── ui/
+    │       ├── button.tsx            # shadcn-style button (Radix Slot + cva)
+    │       └── switch.tsx            # shadcn-style switch (Radix)
+    ├── hooks/
+    │   └── usePrefersReducedMotion.ts
+    ├── lib/
+    │   ├── ipc.ts              # Typed IPC protocol (mirrors IpcBridge.cs)
+    │   ├── constants.ts        # Ports, URLs, repo/donate links
+    │   ├── navigation.tsx      # NavContext (page tags)
+    │   ├── status-context.tsx  # App-level log + config context (consumed by Status)
+    │   └── utils.ts            # cn() class merge
+    ├── screens/
+    │   ├── index.ts            # PAGES registry (title/subtitle/component)
+    │   ├── SetupSummary.tsx
+    │   ├── Status.tsx
+    │   ├── Editor.tsx
+    │   ├── MapDevice.tsx
+    │   └── Help.tsx
+    └── styles/
+        └── globals.css         # Tailwind 4 @theme tokens + utilities
 ```
 
 ### 2.3 Python Sidecar (existing, bundled via PyInstaller)
@@ -271,10 +295,10 @@ First launch triggers the wizard. Subsequent launches skip to the summary
 
 | Step | Check Logic | If Missing |
 |------|------------|------------|
-| **1. loopMIDI** | Query registry `HKLM\SOFTWARE\TOBIAS-ERICHSEN\loopMIDI` | Show "Installing..." card, **download** the official installer from loopmidi.se (verify SHA-256), run `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` (needs UAC), then create the port and poll `mido.get_input_names()`. **Do not redistribute** the installer inside our EXE — download at setup time (EULA-clean). Show expected size: ~2 MB. |
-| **2. Traktor** | Scan `%USERPROFILE%\Documents\Native Instruments\Traktor <ver>\Traktor Settings.tsi` | **Primary (proven):** surgically inject out-mappings into the existing `Generic MIDI` device — see §5.1. **Fallback:** if the file is absent/locked, guide a manual import. Never overwrite the whole settings file. |
-| **3. Python** | Not needed — bundled PyInstaller sidecar includes embedded Python | Show info card: "Python runtime is embedded (~60MB). No installation required." Expected disk: already included in EXE. |
-| **4. Server** | Start `midimat-server.exe --managed --midi --nhl` | Show live status card with server URL, WebSocket status, first log lines. "Starting..." → "Running ✓". Expected disk: sidecar is embedded. |
+| **1. loopMIDI** | Check installed (`HKCU`/`HKLM` `SOFTWARE\Tobias Erichsen`, `…\loopMIDI`, or the `Uninstall\loopMIDI` entry). Ports are **DWORD values under `HKCU\SOFTWARE\Tobias Erichsen\loopMIDI\Ports`** (`<PortName> = 1`). The older `HKLM\SOFTWARE\TOBIAS-ERICHSEN\loopMIDI` key **does not exist**; the driver lives at `HKLM\SOFTWARE\Tobias Erichsen\teVirtualMIDI64`. | **Download** the vendor archive from **tobias-erichsen.de** (pinned: `…/2020/01/loopMIDISetup_1_0_16_27.zip`, SHA-256 `975399eb…4e0d5`), verify the hash, extract, and run the `.exe` with `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` (a UAC prompt; the app itself stays `asInvoker`). **Do not redistribute** the installer — download at setup time. Then write the port value (**HKCU — no admin needed**) and **restart `loopMIDI.exe`**: the registry change does nothing until the process re-reads it at startup. Liveness is verified by enumerating Win32 `midiOutGetDeviceCaps` (the native shell cannot use `mido`). Expected archive: ~7.9 MB (a single `loopMIDISetup.exe`). |
+| **2. Traktor** | Scan `<Documents \| OneDrive\Documents>\Native Instruments\Traktor*\Traktor Settings.tsi`, taking the **newest** file across all `Traktor*` version folders (picking the first folder alphabetically reported an ancient Traktor 3.10 on a machine running 4.5). | **Primary (proven):** surgically edit the existing `Generic MIDI` device — set its **out-port** (`DDPT`) to the shipped port name **`MidiMAT`**, and inject the out-mappings (`CMAI` + `DCBM`) — see §5.1; both operations live in `app/Services/TraktorConfig.cs`. **Fallback:** if the file is absent/locked, guide a manual import. Never overwrite the whole settings file; a hard guard refuses any write while a `Traktor*` process is running. |
+| **3. Python** | Not needed — the bundled PyInstaller sidecar embeds Python | Show info card: "Python runtime is embedded in the sidecar. No installation required." Expected disk: already included. |
+| **4. Server** | Start the bundled sidecar (`midimat-server.exe --http-port 8080 --ws-port 8787 --midi`, plus `--nhl` when NHL mode is on and `--no-demo` when demo mode is off — see `SidecarManager.BuildArguments`; `--managed` is **not** passed, because `server.py` does not accept it). | Show live status card with server URL, WebSocket status, first log lines. "Starting..." → "Running ✓". Expected disk: installed to `%LOCALAPPDATA%\MidiMAT\sidecar\`. |
 | **5. OBS** | Check registry `HKLM\SOFTWARE\OBS Studio` + common paths | **If found:** Show Browser Source config card with visual guide (screenshots of OBS source properties, URL to paste: `http://127.0.0.1:8080/overlay/index.html`). **If not found:** "OBS not detected. [Download OBS](https://obsproject.com) — wait for install, then click Re-check." |
 | **6. Save** | Write `midimat.config.json` with all detected paths + `skip_checks: true` | Summary card: "All set! Next launch will skip checks." Toggle: "Always check on startup" (off by default). |
 
@@ -282,12 +306,12 @@ First launch triggers the wizard. Subsequent launches skip to the summary
 
 | Component | Size |
 |-----------|------|
-| MidiMAT.exe (extracted to %LOCALAPPDATA%\MidiMAT) | ~35MB |
-| Python sidecar (extracted alongside) | ~60MB |
-| YOLO model (yolo11n.pt) | ~5MB |
-| Overlay assets | ~1MB |
-| loopMIDI (if installed) | ~2MB |
-| **Total** | **~103MB** |
+| `MidiMAT.exe` (single file; self-contained .NET + Windows App SDK) | ~148 MB |
+| Python sidecar (installed to `%LOCALAPPDATA%\MidiMAT\sidecar\`) | ~138 MB |
+| YOLO model (`models/traktor_yolo.pt`, inside the sidecar) | ~5 MB |
+| Overlay assets (inside the sidecar) | ~1 MB |
+| loopMIDI (if installed) | ~8 MB |
+| **Total installed footprint** | **~295 MB** |
 
 ## 5. Traktor configuration
 
@@ -296,8 +320,9 @@ First launch triggers the wizard. Subsequent launches skip to the summary
 The wizard does **not** overwrite the user's Traktor settings. It injects only the
 MidiMAT out-mappings into the existing `Generic MIDI` device.
 
-**Format:** `Traktor Settings.tsi` is XML whose `DeviceIO.Config.*` entry holds a base64
-TLV tree:
+**Format:** `Traktor Settings.tsi` is XML that holds **two** `DeviceIO.Config.*` entries —
+`.Controller` and `.Keyboard`. The device tree lives in the **first** one (`.Controller`), and
+that is the only one the writer ever patches. Its `Value` is a base64 TLV tree:
 ```
 DIOM > DEVS > DEVI(name) > DDAT > DDCB{ CMAS{ CMAI... }, DCBM{ DCBM... } }
 ```
@@ -310,6 +335,9 @@ Each controller is one `DEVI`. MidiMAT's mappings live in the `Generic MIDI` dev
 4. Drop any MidiMAT-owned entries already present (idempotency), then append the pack:
    for each control — `CMAI(midi_idx=new idx, mapping_type=1, cmd_id, CMAD{ControlType=0xFFFF, InteractionMode=8, Target=deck})`
    plus `DCBM(new idx, "Ch01.CC.nnn")`.
+   The CMAD is the **knob field layout with `ControlType` patched to `0xFFFF`**
+   (`ValueType=2`, `MaxOutput=1.0`, `OutputScale=0.0625`): a **120-byte** payload (30 × u32 BE),
+   so each `CMAI` entry is **140 bytes** (12-byte header + 8-byte `CMAD` tag/length + 120).
 5. Rebuild the DDCB with updated counts; rebuild DEVI→DEVS→DIOM.
 6. Write back with a **surgical regex replace of the `Value="…"` attribute only** —
    never re-serialize the XML (ElementTree rewrites `<Entry></Entry>` to `<Entry />`).
@@ -324,7 +352,9 @@ Each controller is one `DEVI`. MidiMAT's mappings live in the `Generic MIDI` dev
 - The library `py-ni-traktor-tsi` `rebuild_tsi()` rewrites **every** DEVI — do not use it;
   write a targeted rebuild.
 - Traktor rewrites the file on exit — the wizard must detect a running Traktor and ask the
-  user to close it before writing.
+  user to close it before writing. `TraktorConfig` enforces this as a **hard guard**: every
+  writer (`SetOutPort`, `InjectMappings`) returns an error while any `Traktor*` process is
+  running, before it touches the file.
 
 **Verification done:** injected one output mapping into a live 100-mapping config —
 508 XML entries unchanged, 0 diff outside the blob, all four non-target devices
@@ -350,7 +380,7 @@ streams reports and the Z1 MK2 is partially decoded (`nhl_map.json`, 10 controls
   "skip_checks": true,
   "paths": {
     "loopmidi_port": "MidiMAT",
-    "traktor_tsi": "C:\\Users\\jaros\\AppData\\Roaming\\Native Instruments\\Traktor 4.5.1\\Traktor Settings.tsi",
+    "traktor_tsi": "C:\\Users\\jaros\\OneDrive\\Documents\\Native Instruments\\Traktor 4.5.1\\Traktor Settings.tsi",
     "obs_exe": "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"
   },
   "server": {
@@ -364,6 +394,11 @@ streams reports and the Z1 MK2 is partially decoded (`nhl_map.json`, 10 controls
   "editor_url": "http://127.0.0.1:8080/overlay/edit.html"
 }
 ```
+
+`paths.traktor_tsi` is filled in by the finder, not typed by the user: it scans
+`<Documents | OneDrive\Documents>\Native Instruments\Traktor*` and picks the **newest**
+`Traktor Settings.tsi` across all version folders. (Picking the first folder alphabetically
+reported an ancient Traktor 3.10 on a machine that actually runs 4.5.)
 
 ### State file locations
 
@@ -384,77 +419,105 @@ put `MidiMAT.exe` on a USB stick, run it on any Windows PC, and all state lives 
 ## 7. Build Pipeline
 
 ```
-Developer machine                         Output
-─────────────────                         ──────
+Developer machine                                  Output
+─────────────────                                  ──────
 
 ┌─────────────────┐
-│ ui/             │ ──→ npm run build ──→ ui/dist/  (React SPA, ~500KB)
-│ (React+Vite)    │
+│ ui/             │ ──→ npm run build ──→ app/Resources/ui/  (React SPA; Vite outDir)
+│ (React+Vite)    │     emptyOutDir wipes it first, then re-creates .gitkeep
 └─────────────────┘
 
 ┌─────────────────┐
-│ sidecar/        │ ──→ pyinstaller ──→ build/midimat-server.exe  (~60MB)
+│ sidecar/        │ ──→ PyInstaller ──→ build/dist/midimat-server/  (onedir, ~138 MB)
 │ (Python)        │     build/midimat-server.spec
 └─────────────────┘
 
 ┌─────────────────┐
-│ app/            │ ──→ dotnet publish ──→ MidiMAT.exe  (~35MB)
-│ (C# WinApp SDK) │     -r win-x64 -p:PublishSingleFile=true
-│                 │     -p:IncludeNativeLibrariesForSelfExtract=true
-│  embeds:        │     -p:EnableCompressionInSingleFile=true
-│  • ui/dist/     │
-│  • sidecar.exe  │
-│  • overlay/     │
-│  • loopmidi.exe │
-│  • *.tsi        │
+│ app/            │ ──→ dotnet publish ──→ dist/MidiMAT.exe  (~148 MB, single file)
+│ (C# WinUI 3)    │     -r win-x64 -p:Platform=x64 -p:PublishSingleFile=true
+│                 │     -p:SelfContained=true -p:EnableMsixTooling=true
+│  payload:       │     -p:IncludeNativeLibrariesForSelfExtract=true
+│  • Resources/ui/│     -p:EnableCompressionInSingleFile=true
+│  • sidecar/     │
 └─────────────────┘
-
-                                    ──→ MidiMAT.exe  (single file, ~35MB)
 ```
 
 ### Build commands (final)
 
 ```powershell
-# 1. Build React UI
-cd ui && npm ci && npm run build
+# 1. Build the React UI (outputs straight into app/Resources/ui)
+npm --prefix ui ci
+npm --prefix ui run build
 
-# 2. Build Python sidecar
-pyinstaller build/midimat-server.spec --clean
+# 2. Build the Python sidecar (onedir)
+python -m PyInstaller build/midimat-server.spec --noconfirm --clean
+#   → build/dist/midimat-server/   (onedir, ~138 MB; the OpenCV cv2 payload dominates)
 
-# 3. Build single EXE
-cd app
-dotnet publish -c Release -r win-x64 `
+# 3. Build the single-file EXE
+#    EnableMsixTooling=true is REQUIRED: PublishSingleFile on an unpackaged WinUI 3
+#    app errors out without it. The app stays unpackaged (WindowsPackageType=None);
+#    this only satisfies the SDK.
+dotnet publish app\MidiMAT.csproj -c Release -r win-x64 `
+  -p:Platform=x64 `
   -p:PublishSingleFile=true `
   -p:SelfContained=true `
+  -p:EnableMsixTooling=true `
   -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true `
-  -o ../dist/
+  -o dist
+#   → dist/MidiMAT.exe   (~148 MB single file)
+#   → dist/sidecar/      (the PyInstaller bundle, when it exists at publish time)
 ```
+
+### How the sidecar reaches a user machine
+
+The published `dist/` carries the PyInstaller bundle **as `sidecar/` next to `MidiMAT.exe`**
+(`MidiMAT.csproj` globs `..\build\dist\midimat-server\**\*` into `sidecar\` when that folder
+exists). On first run `MainWindow` calls `SidecarExtractor.EnsureInstalled()`, which copies the
+payload to `%LOCALAPPDATA%\MidiMAT\sidecar\` (skipping the copy when the `.bundle-version`
+stamp already matches). `SidecarManager.ResolveSidecarLaunch` checks that installed path
+**first**, then a repo-local `build\midimat-server.exe`, then the venv's `python sidecar\server.py`
+(dev) — so the shipped app never needs a repo checkout after the first run.
+
+**Trap (cost a debugging session):** in a single-file app, `AppContext.BaseDirectory` can point
+at the native-library **extraction dir**, not the folder holding `MidiMAT.exe`. Resolving the
+app's own location must go through `Environment.ProcessPath` — `SidecarManager.FindRepoRoot`
+does exactly that (it still also tries `AppContext.BaseDirectory`, since `SidecarExtractor`
+reads the `sidecar\` payload from the base directory).
+
+Note: the app no longer embeds `midimat-server.exe`/`overlay/` as resources, and it does **not**
+bundle a loopMIDI installer or a `.tsi` — loopMIDI is downloaded+verified at setup, and Traktor
+is edited surgically (see §2.1 and §4).
 
 ## 8. Screen Designs (Summary)
 
 ### 8.1 Setup Summary (default screen after setup)
 
 ```
-┌──────────┬─────────────────────────────────────────────────┐
-│          │                                                 │
-│  LOGO    │  SETUP SUMMARY                                 │
-│          │                                                 │
-│ ──────── │  ┌─────────────┐  ┌─────────────┐             │
-│ ● Setup  │  │ 🎵 loopMIDI │  │ 🎛 Traktor  │             │
-│   Status │  │  ✓ Installed│  │  ✓ Configured│             │
-│   Editor │  │  Port: MidiM│  │  TSI: v4.5.1│             │
-│   Map    │  └─────────────┘  └─────────────┘             │
-│   Help   │                                                 │
-│          │  ┌─────────────┐  ┌─────────────┐             │
-│ ──────── │  │ 🖥 Server   │  │ 📹 OBS      │             │
-│ ☕ Support│  │  ● Running │  │  ✓ Detected │             │
-│ ⚙ Settings  │  :8080/:8787│  │  Browser Src│             │
-│          │  └─────────────┘  └─────────────┘             │
-│          │                                                 │
-│          │  [Re-run Setup]  [Open Overlay URL]            │
-└──────────┴─────────────────────────────────────────────────┘
+┌──────────────┬──────────────────────────────────────────────┐
+│              │                                               │
+│  [knob logo] │  SETUP SUMMARY                                │
+│              │                                               │
+│ ──────────── │  ┌─────────────┐  ┌─────────────┐            │
+│ ● Setup      │  │ loopMIDI    │  │ Traktor     │            │
+│   Summary    │  │  ✓ Installed│  │  ✓ Configured│            │
+│   Status     │  │  Port: MidiM│  │  settings file│           │
+│   Editor     │  └─────────────┘  └─────────────┘            │
+│   Map New    │                                               │
+│   Device     │  ┌─────────────┐  ┌─────────────┐            │
+│   Help       │  │ Server      │  │ OBS         │            │
+│              │  │  ● Running  │  │  ✓ Detected │            │
+│ ──────────── │  │  :8080/:8787│  │  Brow. Src  │            │
+│   Support    │  └─────────────┘  └─────────────┘            │
+│   Settings   │                                               │
+│              │  [Re-run setup]   [Open overlay URL]          │
+└──────────────┴──────────────────────────────────────────────┘
 ```
+
+Sidebar: five entries — **Setup Summary, Status, Editor, Map New Device, Help** — plus a
+footer with **Support** (opens the donate link) and **Settings** (a v1 no-op). The logo is the
+approved **knob mark** (`ui/public/midimat-logo.svg`, drawn by
+`components/midimat/midimat-logo.tsx`); the earlier "logo variant B" placeholder is superseded.
 
 ### 8.2 Status Screen
 
@@ -496,19 +559,29 @@ dotnet publish -c Release -r win-x64 `
 └──────────┴─────────────────────────────────────────────────┘
 ```
 
+**Status screen notes:** the shell streams `deps:status` and `server:log` (and posts
+`config:loaded`) from startup, before screens mount. Both are lifted into `App.tsx` state —
+`deps` directly, and the log plus the last config snapshot via a `StatusContext` — because a
+screen that only subscribed on mount would miss everything posted earlier (the original
+late-mount bug left the wizard showing "not detected"). The Status screen reads the log and the
+server flags from that context rather than subscribing itself; the log starts empty (no mock rows).
+
 ## 9. Technology Choices
+
+Versions actually installed / pinned in this build:
 
 | Layer | Technology | Version | Rationale |
 |-------|-----------|---------|-----------|
-| Desktop shell | WinApp SDK (WinUI 3) | 1.6+ | Native Windows, small footprint, system tray |
-| Runtime | .NET | 8.0 LTS | Single-file publish, AOT-ready |
-| Web runtime | WebView2 | Pre-installed | Same Chromium as Electron, zero bundling |
-| Management UI | React | 19 | Aceternity UI compatibility |
-| Styling | Tailwind CSS | 4 | Utility-first, design tokens |
-| Animations | Framer Motion | 11+ | Page transitions, micro-interactions |
-| Bundler | Vite | 6 | Fast HMR, optimized builds |
-| Python bundle | PyInstaller | 6.x | Single-file Python executable |
-| Installer | .NET single-file | — | No separate installer needed |
+| Desktop shell | Windows App SDK (WinUI 3) | 2.6.5 | Native Windows; unpackaged, runtime self-contained |
+| Runtime | .NET | 10 (`net10.0-windows10.0.26100.0`) | Single-file publish |
+| Web runtime | WebView2 SDK | 1.0.4314.35 | Evergreen Chromium; `CoreWebView2` APIs |
+| Management UI | React | 19 | — |
+| Styling | Tailwind CSS | 4 | CSS-first `@theme` tokens (no config file) |
+| Animations | Framer Motion | 14 | Page transitions, micro-interactions |
+| Bundler | Vite | 8 | Fast HMR, optimized builds |
+| Python bundle | PyInstaller | 6.22 | onedir Python executable |
+| Python runtime | CPython | 3.14 | Embedded in the PyInstaller bundle |
+| Packaging | .NET single-file | — | No separate installer needed |
 
 ## 10. Risks & Mitigations
 
@@ -546,7 +619,7 @@ native shell around them, not replacing them.
 
 Prerequisites for building MidiMAT:
 - Visual Studio 2022 (with "Windows App SDK" and ".NET desktop" workloads)
-- .NET 8 SDK
+- .NET 10 SDK (the TFM is `net10.0-windows10.0.26100.0`)
 - Node.js 20+ (for React UI)
 - Python 3.14 + venv (for sidecar development)
 - PyInstaller (`pip install pyinstaller`)
@@ -570,6 +643,6 @@ python sidecar/server.py --midi --nhl
 # Terminal 2: Start React dev server
 cd ui && npm run dev
 
-# Terminal 3: Start WinApp SDK app (points WebView2 at Vite dev server)
+# Terminal 3: Start the WinUI 3 app (serves the built bundle; see app/README for the dev-server tip)
 cd app && dotnet run
 ```

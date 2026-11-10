@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:MidiMAT"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tb="using:H.NotifyIcon"
     Title="MidiMAT"
     mc:Ignorable="d">
 
@@ -16,5 +17,23 @@
     -->
     <Grid>
         <WebView2 x:Name="WebView" />
+
+        <!--
+          Tray icon. Draws nothing itself; its job is to keep MidiMAT reachable after
+          the window is closed, because the sidecar has to stay alive for the OBS
+          Browser Source to keep working. The image is assigned in code-behind from
+          Assets\MidiMAT.ico (a string IconSource would resolve against ms-appx, which
+          an unpackaged app does not have).
+        -->
+        <tb:TaskbarIcon x:Name="Tray" ToolTipText="MidiMAT">
+            <tb:TaskbarIcon.ContextFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="Show MidiMAT" Click="TrayShow_Click" />
+                    <MenuFlyoutItem Text="Open overlay in browser" Click="TrayOverlay_Click" />
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutItem Text="Quit MidiMAT" Click="TrayQuit_Click" />
+                </MenuFlyout>
+            </tb:TaskbarIcon.ContextFlyout>
+        </tb:TaskbarIcon>
     </Grid>
 </Window>

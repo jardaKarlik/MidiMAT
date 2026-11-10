@@ -17,9 +17,6 @@ tricks, no per-frame video processing.
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-22c55e)](#license)
 
-<!-- Screenshot/demo GIF goes here — see docs/images/README.md -->
-<!-- <img src="docs/images/overlay-demo.gif" width="720" alt="MidiMAT glow overlay in OBS" /> -->
-
 </div>
 
 ---
@@ -67,6 +64,13 @@ the per-frame path. That's what keeps the overlay responsive during a set.
   controller via a virtual MIDI port).
 - **Optional AI placement** — the built-in OpenCV detector needs nothing extra; an
   optional trained YOLO detector is more accurate. See `requirements-vision.txt`.
+
+## Demo
+
+[![MidiMAT — live DJ controller overlay for OBS Studio and Streamlabs Desktop](https://img.youtube.com/vi/OTLuQCYerxE/maxresdefault.jpg)](https://youtu.be/OTLuQCYerxE)
+
+▶ **[Watch MidiMAT in action](https://youtu.be/OTLuQCYerxE)** — the glow follows a live
+set, in real time, inside the stream. *(2 min)*
 
 ## Requirements
 

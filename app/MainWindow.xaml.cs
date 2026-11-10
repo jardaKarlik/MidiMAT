@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Windows.Input;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MidiMAT.Services;
@@ -20,14 +22,36 @@ public sealed partial class MainWindow : Window
     private SetupService? _setup;
     private MidiMatConfig _config = new();
 
+    private AppWindow? _appWindow;
+
+    /// <summary>
+    /// Stays false until the tray's Quit is chosen. While false, closing the window
+    /// hides it to the tray instead of exiting, so the sidecar keeps serving the
+    /// OBS Browser Source.
+    /// </summary>
+    private bool _reallyQuitting;
+
+    /// <summary>Only explain "still running in the tray" once per session.</summary>
+    private bool _explainedTray;
+
     public MainWindow()
     {
         InitializeComponent();
         Title = "MidiMAT";
 
+        // Window.Closed cannot be cancelled; AppWindow.Closing can, which is how we
+        // turn "close" into "hide to tray" without losing the sidecar.
+        _appWindow = AppWindow;
+        _appWindow.Closing += OnAppWindowClosing;
+
         // Do not await here (ctor cannot be async); the Loaded handler does the async init.
         WebView.Loaded += WebView2_Loaded;
-        Closed += (_, _) => _sidecar?.Dispose();
+
+        Closed += (_, _) =>
+        {
+            _sidecar?.Dispose();
+            DisposeTray();
+        };
     }
 
     private async void WebView2_Loaded(object sender, RoutedEventArgs e)
@@ -84,6 +108,9 @@ public sealed partial class MainWindow : Window
 
         _setup = new SetupService(_config, _sidecar);
         _setup.ProgressChanged += OnSetupProgress;
+
+        // Tray as early as practical: it is the only way back once the window is hidden.
+        InitTray();
 
         core.NavigationCompleted += (_, _) =>
         {
@@ -215,10 +242,49 @@ public sealed partial class MainWindow : Window
         try
         {
             var incoming = JsonSerializer.Deserialize<ConfigSavePayload>(payloadJson, JsonOptions);
-            if (incoming is not null)
+            if (incoming is null)
             {
-                _config.SkipChecks = incoming.SkipChecks;
-                ConfigStore.Save(_config);
+                return;
+            }
+
+            // Merge only the fields the caller actually sent. Every field is
+            // optional, so the older `{ skipChecks }` shape and a partial update
+            // both work; an absent field leaves the current value untouched.
+            if (incoming.SkipChecks is bool skipChecks)
+            {
+                _config.SkipChecks = skipChecks;
+            }
+
+            // demo_mode / nhl_mode are sidecar start-up flags (BuildArguments maps
+            // them to --nhl / --no-demo), so a live change only takes effect after
+            // a restart. Track whether either actually changed on disk.
+            var restartNeeded = false;
+
+            if (incoming.DemoMode is bool demoMode && demoMode != _config.Server.DemoMode)
+            {
+                _config.Server.DemoMode = demoMode;
+                restartNeeded = true;
+            }
+
+            if (incoming.NhlMode is bool nhlMode && nhlMode != _config.Server.NhlMode)
+            {
+                _config.Server.NhlMode = nhlMode;
+                restartNeeded = true;
+            }
+
+            // auto_start only gates launch at startup; no restart required.
+            if (incoming.AutoStart is bool autoStart)
+            {
+                _config.Server.AutoStart = autoStart;
+            }
+
+            ConfigStore.Save(_config);
+
+            if (restartNeeded && _sidecar?.State == SidecarState.Running)
+            {
+                // StateChanged re-posts deps:status; the restart itself streams to
+                // the UI via server:log.
+                _sidecar.Restart();
             }
         }
         catch (JsonException ex)
@@ -227,8 +293,15 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>Payload of the <c>config:save</c> message (mirrors ui/src/lib/ipc.ts).</summary>
-    private sealed record ConfigSavePayload(bool SkipChecks);
+    /// <summary>
+    /// Payload of the <c>config:save</c> message (mirrors ui/src/lib/ipc.ts).
+    /// All fields are nullable so a caller can send any subset.
+    /// </summary>
+    private sealed record ConfigSavePayload(
+        bool? SkipChecks,
+        bool? DemoMode,
+        bool? NhlMode,
+        bool? AutoStart);
 
     // ----------------------------------------------------------------------
     // Setup wizard
@@ -312,6 +385,139 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Payload of the <c>setup:start</c> message (mirrors ui/src/lib/ipc.ts).</summary>
     private sealed record SetupStartPayload(int Step);
+
+    // ----------------------------------------------------------------------
+    // System tray
+    // ----------------------------------------------------------------------
+
+    /// <summary>
+    /// Create the tray icon. The image comes from <c>Assets\MidiMAT.ico</c> next to the
+    /// EXE (copied by MidiMAT.csproj); if that is missing we fall back to the icon
+    /// embedded in our own executable by <c>&lt;ApplicationIcon&gt;</c>.
+    /// </summary>
+    private void InitTray()
+    {
+        try
+        {
+            Tray.Icon = LoadTrayIcon();
+            Tray.LeftClickCommand = new TrayRelayCommand(ShowFromTray);
+            Tray.ForceCreate();
+            LogToFile($"tray: created={Tray.IsCreated}");
+        }
+        catch (Exception ex)
+        {
+            // A missing tray icon degrades the app; it must not take it down.
+            LogToFile($"tray init failed: {ex}");
+        }
+    }
+
+    private static System.Drawing.Icon? LoadTrayIcon()
+    {
+        var icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "MidiMAT.ico");
+        if (File.Exists(icoPath))
+        {
+            return new System.Drawing.Icon(icoPath);
+        }
+
+        // Single-file publish keeps the icon inside the EXE rather than on disk.
+        var exe = Environment.ProcessPath;
+        return exe is null ? null : System.Drawing.Icon.ExtractAssociatedIcon(exe);
+    }
+
+    private void DisposeTray()
+    {
+        try
+        {
+            Tray.Dispose();
+        }
+        catch
+        {
+            // Already torn down by the runtime; nothing useful to do.
+        }
+    }
+
+    private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_reallyQuitting)
+        {
+            return;
+        }
+
+        // Keep the sidecar alive: the overlay in OBS talks to it over localhost, so
+        // exiting here would black out the Browser Source mid-set.
+        args.Cancel = true;
+        _appWindow?.Hide();
+
+        if (!_explainedTray)
+        {
+            _explainedTray = true;
+            try
+            {
+                Tray.ShowNotification(
+                    "MidiMAT is still running",
+                    "Your overlay in OBS keeps working. Click the tray icon to reopen, or use Quit MidiMAT.");
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"tray notification failed: {ex}");
+            }
+        }
+    }
+
+    private void ShowFromTray()
+    {
+        try
+        {
+            _appWindow?.Show();
+            Activate();
+        }
+        catch (Exception ex)
+        {
+            LogToFile($"tray show failed: {ex}");
+        }
+    }
+
+    private void TrayShow_Click(object sender, RoutedEventArgs e) => ShowFromTray();
+
+    private void TrayOverlay_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // Exactly the URL the streaming instructions tell people to add to OBS.
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "http://127.0.0.1:8080/overlay/index.html",
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            LogToFile($"tray overlay open failed: {ex}");
+        }
+    }
+
+    private void TrayQuit_Click(object sender, RoutedEventArgs e)
+    {
+        _reallyQuitting = true;
+        Close();
+    }
+
+    /// <summary>
+    /// Minimal ICommand so the tray's left click works without pulling in an MVVM toolkit.
+    /// CanExecute is constant, hence the no-op CanExecuteChanged.
+    /// </summary>
+    private sealed class TrayRelayCommand(Action action) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => action();
+    }
 
     /// <summary>
     /// Minimal file log at %LOCALAPPDATA%\MidiMAT\logs\app.log. The shell is a

@@ -55,19 +55,31 @@ assets are never committed.
 ```
 ui/
 ├── index.html               # entry document
-├── vite.config.ts           # base "./", outDir ../app/Resources/ui
-├── tsconfig.json
+├── vite.config.ts           # base "./", outDir ../app/Resources/ui, "@" → src alias
+├── tsconfig.json            # "@/*" → "src/*"
+├── public/
+│   └── midimat-logo.svg     # approved knob-mark logo
 └── src/
-    ├── main.tsx             # React root + font/bundle imports
-    ├── App.tsx              # sidebar + state routing + page transitions
+    ├── main.tsx             # React root + @fontsource imports
+    ├── App.tsx              # nav state + host messages + page transitions
     ├── components/
-    │   ├── layout/          # Sidebar, PageTransition
-    │   └── ui/              # evervault/wobble/glowing cards, pulse-dot, animated-border, switch
+    │   ├── layout/          # PageTransition
+    │   ├── midimat/         # app-shell, app-sidebar, midimat-logo, server-log,
+    │   │                    #   server-status-card, setup-card, status-dot, switch-row
+    │   ├── setup/           # SetupWizard + the 6 step components + metadata
+    │   └── ui/              # shadcn-style button.tsx, switch.tsx (Radix)
     ├── hooks/               # usePrefersReducedMotion
-    ├── lib/                 # ipc.ts (typed bridge), constants.ts, cn.ts
-    ├── screens/             # SetupSummary, Status, Editor, MapDevice, Help
+    ├── lib/                 # ipc.ts (typed bridge), constants.ts, navigation.tsx,
+    │                        #   status-context.tsx, utils.ts
+    ├── screens/             # SetupSummary, Status, Editor, MapDevice, Help (see index.ts)
     └── styles/globals.css   # Tailwind 4 @theme design tokens
 ```
+
+**Screens:** all five — Setup Summary, Status, Editor, Map New Device (device mapper) and Help
+— plus the first-run **setup wizard** (`components/setup/SetupWizard.tsx`, a full-screen
+overlay that runs over the shell). Imports use the `@` → `src` alias (set in both
+`vite.config.ts` and `tsconfig.json`). Fonts ship **offline** via `@fontsource` (imported in
+`main.tsx`) — no CDN and no `public/fonts/` directory.
 
 ## IPC
 
