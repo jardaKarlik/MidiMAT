@@ -1,10 +1,11 @@
-using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MidiMAT.Services;
 
 /// <summary>
 /// Installs the bundled Python sidecar into <c>%LOCALAPPDATA%\MidiMAT\sidecar\</c> on
-/// first run (or when the version changes), so a user machine never needs a repo
+/// first run (or when the bundle changes), so a user machine never needs a repo
 /// checkout. <see cref="SidecarManager"/> already resolves that path first, so once the
 /// files land there the app is fully self-contained.
 ///
@@ -13,8 +14,15 @@ namespace MidiMAT.Services;
 /// </summary>
 public static class SidecarExtractor
 {
-    /// <summary>Bump when the bundled sidecar changes, to force a re-copy on upgrade.</summary>
-    private const string BundleVersion = "1";
+    /// <summary>
+    /// Fingerprint of the bundled sidecar, written next to the installed copy.
+    ///
+    /// This used to be a hand-bumped constant ("1"), which meant an upgraded app
+    /// kept running the sidecar from the previous release — the user got new UI
+    /// with an old backend and no clue why. It is now derived from the bundle's
+    /// content, so any change to the payload forces a re-copy automatically.
+    /// </summary>
+    private const string StampFileName = ".bundle-version";
 
     private static string TargetDirectory =>
         Path.Combine(ConfigStore.AppDataDirectory, "sidecar");
@@ -31,16 +39,11 @@ public static class SidecarExtractor
 
     /// <summary>
     /// Ensure the sidecar is installed. Safe to call on every start: returns quickly
-    /// when the installed copy is already at <see cref="BundleVersion"/>.
+    /// when the installed copy already matches the bundled one.
     /// </summary>
     public static ExtractResult EnsureInstalled()
     {
-        var stampPath = Path.Combine(TargetDirectory, ".bundle-version");
-
-        if (File.Exists(InstalledExecutable) && ReadStamp(stampPath) == BundleVersion)
-        {
-            return new ExtractResult(true, false, $"sidecar up to date ({TargetDirectory})");
-        }
+        var stampPath = Path.Combine(TargetDirectory, StampFileName);
 
         if (!Directory.Exists(SourceDirectory))
         {
@@ -49,11 +52,18 @@ public static class SidecarExtractor
                 $"no bundled sidecar at {SourceDirectory} (dev run?)");
         }
 
+        var fingerprint = ComputeFingerprint(SourceDirectory);
+
+        if (File.Exists(InstalledExecutable) && ReadStamp(stampPath) == fingerprint)
+        {
+            return new ExtractResult(true, false, $"sidecar up to date ({TargetDirectory})");
+        }
+
         try
         {
             CopyDirectory(SourceDirectory, TargetDirectory);
-            File.WriteAllText(stampPath, BundleVersion);
-            MainWindow.LogToFile($"sidecar installed -> {TargetDirectory}");
+            File.WriteAllText(stampPath, fingerprint);
+            MainWindow.LogToFile($"sidecar installed -> {TargetDirectory} (bundle {fingerprint})");
             return new ExtractResult(true, true, $"installed to {TargetDirectory}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -61,6 +71,31 @@ public static class SidecarExtractor
             MainWindow.LogToFile($"sidecar install FAILED: {ex}");
             return new ExtractResult(false, false, $"install failed: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Content fingerprint of the bundle: every file's relative path, size and
+    /// last-write tick, hashed. Cheap (no file reads) but changes whenever the
+    /// bundle is rebuilt, which is exactly when a re-copy is needed.
+    /// </summary>
+    private static string ComputeFingerprint(string directory)
+    {
+        var builder = new StringBuilder();
+
+        foreach (var file in Directory.GetFiles(directory, "*", SearchOption.AllDirectories)
+                     .OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var info = new FileInfo(file);
+            builder.Append(Path.GetRelativePath(directory, file))
+                   .Append('|')
+                   .Append(info.Length)
+                   .Append('|')
+                   .Append(info.LastWriteTimeUtc.Ticks)
+                   .Append('\n');
+        }
+
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString()));
+        return Convert.ToHexString(bytes)[..16];
     }
 
     private static string? ReadStamp(string path)
@@ -89,10 +124,18 @@ public static class SidecarExtractor
             var dest = Path.Combine(target, Path.GetRelativePath(source, file));
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
 
-            // Overwrite only when the bytes differ, so a re-run is cheap.
-            if (File.Exists(dest) && new FileInfo(dest).Length == new FileInfo(file).Length)
+            // Overwrite only when the file actually differs, so a re-run is cheap.
+            // Compare size AND write time — a rebuild can produce a same-size file
+            // with different bytes, and size alone would skip it.
+            if (File.Exists(dest))
             {
-                continue;
+                var existing = new FileInfo(dest);
+                var incoming = new FileInfo(file);
+                if (existing.Length == incoming.Length &&
+                    existing.LastWriteTimeUtc == incoming.LastWriteTimeUtc)
+                {
+                    continue;
+                }
             }
 
             File.Copy(file, dest, overwrite: true);
