@@ -85,6 +85,17 @@ set, in real time, inside the stream. *(2 min)*
 > **macOS / Linux:** not supported yet. The overlay and sidecar are portable, but the
 > virtual-MIDI bridge differs per platform.
 
+## Download
+
+**v0.1.0** — [download `MidiMAT.exe`](https://github.com/jardaKarlik/MidiMAT/releases/tag/v0.1.0)
+(release page) · [release notes](https://github.com/jardaKarlik/MidiMAT/releases/tag/v0.1.0)
+
+One self-contained file — the app installs the Python sidecar to `%LOCALAPPDATA%\MidiMAT`
+on first run. Windows may warn about the unsigned download (no code-signing certificate
+yet); choose *More info → Run anyway* if you trust the source.
+
+Prefer to build it yourself? See [Running from source](#running-from-source-developers).
+
 ## Getting started
 
 Launch MidiMAT and the **Setup Wizard** opens on first run. It checks your machine and
@@ -211,7 +222,8 @@ MidiMAT/
 | Real MIDI input + Traktor mapping resolution | ✅ working |
 | Visual editor + auto re-fit | ✅ working |
 | Guided mapping wizard | ✅ working |
-| Desktop app (installable, single EXE) | 🚧 in development |
+| Desktop app (single-file EXE) | ✅ shipped — [v0.1.0](https://github.com/jardaKarlik/MidiMAT/releases/tag/v0.1.0) |
+| Editor / Map New Device screens in the app | 🚧 still mockups (see [`docs/BACKLOG.md`](docs/BACKLOG.md)) |
 | Direct-HID input (drop the loopMIDI requirement) | 🔬 researched, not implemented |
 
 ## Contributing

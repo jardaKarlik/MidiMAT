@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
-import { COFFEE_URL, REPO_URL } from "@/lib/constants";
+import { APP_VERSION, COFFEE_URL, REPO_URL } from "@/lib/constants";
 
 interface SwitchNote {
   title: string;
@@ -83,6 +83,20 @@ export function Help() {
         >
           {REPO_URL}
         </a>
+        <p className="mt-3 font-mono text-xs text-muted-foreground">
+          Version {APP_VERSION}
+          <span className="mx-2" aria-hidden="true">
+            ·
+          </span>
+          <a
+            href={`${REPO_URL}/releases/tag/v${APP_VERSION}`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="underline-offset-4 hover:underline"
+          >
+            v{APP_VERSION} release notes
+          </a>
+        </p>
       </Section>
 
       <Section icon={User} title="Built by jardaKarlik">

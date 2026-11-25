@@ -35,3 +35,6 @@ export const COFFEE_URL = "https://www.buymeacoffee.com/lee_cz";
 
 /** Upstream repository (DESIGN_APP.md §12). */
 export const REPO_URL = "https://github.com/jardaKarlik/MidiMAT";
+
+/** Release version — keep in sync with app/MidiMAT.csproj and CHANGELOG.md. */
+export const APP_VERSION = "0.1.0";

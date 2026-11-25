@@ -66,6 +66,8 @@ app/obj/
 # build/midimat-server.spec and the dotnet publish command in DESIGN_APP.md §7.
 build/dist/
 build/work/
+# PyInstaller onedir output (the bundle the shell embeds as the sidecar payload).
+build/midimat-server/
 dist/
 
 # --- React management UI (ui/) ------------------------------------------------
